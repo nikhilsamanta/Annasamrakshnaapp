@@ -65,23 +65,34 @@ MDNavigationLayout:
             padding: "20dp"
             spacing: "10dp"
             md_bg_color: 235/255, 220/255, 199/255, 1
-            MDTextField:
-                id: username
-                hint_text: "Username"
-                size_hint: (0.8, None)
-                height: "40dp"
-            MDTextField:
-                id: password
-                hint_text: "Password"
-                size_hint: (0.8, None)
-                height: "40dp"
-                password: True
-            MDRaisedButton:
-                text: "Login"
-                size_hint: (0.8, None)
-                height: "50dp"
-                md_bg_color: 205/255, 133/255, 63/255,
-                on_release: app.login()
+            Image:
+                source: 'D:/Annsamrakshna/assets/logo/Annsamrakshna.png'
+                size_hint: (0.8, 0.7)
+                pos_hint: {"center_x": 0.5}
+                keep_ratio: True
+                allow_stretch: True
+            MDBoxLayout:
+                orientation: 'vertical'
+                padding: [50,100]
+                spacing: dp(20)
+
+                MDTextField:
+                    id: username
+                    hint_text: "Username"
+                    size_hint: (1, None)
+                    height: "40dp"
+                MDTextField:
+                    id: password
+                    hint_text: "Password"
+                    size_hint: (1, None)
+                    height: "40dp"
+                    password: True
+                MDRaisedButton:
+                    text: "Login"
+                    size_hint: (1, None)
+                    height: "50dp"
+                    md_bg_color: 205/255, 133/255, 63/255,
+                    on_release: app.login()
         
 <HomeScreen>:
     name: 'home'
