@@ -8,6 +8,7 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.navigationdrawer import MDNavigationDrawer, MDNavigationLayout, MDNavigationDrawerMenu, MDNavigationDrawerHeader, MDNavigationDrawerItem
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.core.window import Window
+import webbrowser
 
 Window.size = (360, 640)
 
@@ -21,6 +22,7 @@ MDNavigationLayout:
         NGORegisterScreen:
         ViewDonationsScreen:
         ViewNGOsScreen:
+        DonationDetailScreen:
 
     MDNavigationDrawer:
         id: nav_drawer
@@ -80,11 +82,13 @@ MDNavigationLayout:
                     id: username
                     hint_text: "Username"
                     size_hint: (1, None)
+                    icon_right: 'account'
                     height: "40dp"
                 MDTextField:
                     id: password
                     hint_text: "Password"
                     size_hint: (1, None)
+                    icon_right: 'eye-off'
                     height: "40dp"
                     password: True
                 MDRaisedButton:
@@ -246,7 +250,46 @@ MDNavigationLayout:
                 MDList:
                     id: ngo_list 
 
+<DonationDetailScreen>:
+    name: 'donation_detail'
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Donation Details"
+            md_bg_color: 205/255, 133/255, 63/255,
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home')]]
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: '20dp'
+            spacing: '10dp'
+            md_bg_color: 235/255, 220/255, 199/255, 1
+            MDLabel:
+                id: donor_name
+                text: "Donor: "
+                halign: 'center'
+            MDLabel:
+                id: food_type
+                text: "Food Type: "
+                halign: 'center'
+            MDLabel:
+                id: quantity
+                text: "Quantity: "
+                halign: 'center'
+            MDLabel:
+                id: location
+                text: "Location: "
+                halign: 'center'
+            MDRectangleFlatButton:
+                text: 'Open Location in Google Maps'
+                size_hint_x: 0.6
+                pos_hint: {'center_x': 0.5}
+                md_bg_color: 205/255, 133/255, 63/255,
+                theme_text_color: "Custom"
+                text_color: 1, 1, 1, 1 
+                on_release: app.open_google_maps()
 """ 
+
+ 
 
 class LoginScreen(Screen):
     pass
@@ -264,6 +307,9 @@ class ViewDonationsScreen(Screen):
     pass
 
 class ViewNGOsScreen(Screen):
+    pass
+
+class DonationDetailScreen(Screen):
     pass
 
 class FoodWasteApp(MDApp):
@@ -293,80 +339,102 @@ class FoodWasteApp(MDApp):
             self.show_dialog("Error", "Invalid credentials, please try again.")
     
     def add_donation(self):
-     screen_manager = self.root.ids.screen_manager  
-     donate_screen = screen_manager.get_screen('donate')  
+        screen_manager = self.root.ids.screen_manager  
+        donate_screen = screen_manager.get_screen('donate')  
 
-     donor_name = donate_screen.ids.donor_name.text
-     food_type = donate_screen.ids.food_type.text
-     quantity = donate_screen.ids.quantity.text
-     location = donate_screen.ids.location.text
+        donor_name = donate_screen.ids.donor_name.text
+        food_type = donate_screen.ids.food_type.text
+        quantity = donate_screen.ids.quantity.text
+        location = donate_screen.ids.location.text
 
-     if donor_name and food_type and quantity and location:
-        self.donations.append({
-            "Donor": donor_name,
-            "Food": food_type,
-            "Quantity": quantity,
-            "Location": location
-        })
+        if donor_name and food_type and quantity and location:
+            self.donations.append({
+                "Donor": donor_name,
+                "Food": food_type,
+                "Quantity": quantity,
+                "Location": location
+            })
 
+            donate_screen.ids.donor_name.text = ""
+            donate_screen.ids.food_type.text = ""
+            donate_screen.ids.quantity.text = ""
+            donate_screen.ids.location.text = ""
 
-        donate_screen.ids.donor_name.text = ""
-        donate_screen.ids.food_type.text = ""
-        donate_screen.ids.quantity.text = ""
-        donate_screen.ids.location.text = ""
-
-        self.show_dialog("Success", "Donation added successfully!")
-        self.update_donations()
-        self.change_screen('home')
-     else:
-        self.show_dialog("Error", "Please fill out all fields!")
-
+            self.show_dialog("Success", "Donation added successfully!")
+            self.update_donations()
+            self.change_screen('home')
+        else:
+            self.show_dialog("Error", "Please fill out all fields!")
 
     def update_donations(self):
-     screen_manager = self.root.ids.screen_manager  
-     donation_list = screen_manager.get_screen('view_donations').ids.donation_list
+        screen_manager = self.root.ids.screen_manager  
+        donation_list = screen_manager.get_screen('view_donations').ids.donation_list
 
-     donation_list.clear_widgets() 
+        donation_list.clear_widgets() 
 
-     for donation in self.donations:
-        item_text = f"{donation['Donor']} donated {donation['Quantity']} of {donation['Food']} at {donation['Location']}"
-        donation_list.add_widget(OneLineListItem(text=item_text))
+        for donation in self.donations:
+            item_text = f"{donation['Donor']} donated {donation['Quantity']} of {donation['Food']} at {donation['Location']}"
+            list_item = OneLineListItem(text=item_text, on_release=lambda x, donation=donation: self.show_donation_detail(donation))
+            donation_list.add_widget(list_item)
+
+    def show_donation_detail(self, donation):
+        screen_manager = self.root.ids.screen_manager
+        detail_screen = screen_manager.get_screen('donation_detail')
+
+        detail_screen.ids.donor_name.text = f"Donor: {donation['Donor']}"
+        detail_screen.ids.food_type.text = f"Food Type: {donation['Food']}"
+        detail_screen.ids.quantity.text = f"Quantity: {donation['Quantity']}"
+        detail_screen.ids.location.text = f"Location: {donation['Location']}"
+
+        self.change_screen('donation_detail')
+    def open_google_maps(self):
+        screen_manager = self.root.ids.screen_manager
+        donation_detail_screen = screen_manager.get_screen('donation_detail')
+        
+        location = donation_detail_screen.ids.location.text.replace("Location: ", "").strip()
+        
+        if location:
+            query = location.replace(" ", "+")  # Convert spaces to `+` for URL encoding
+            url = f"https://www.google.com/maps/search/?api=1&query={query}"
+            webbrowser.open(url)
+        else:
+            self.show_dialog("Error", "No location provided.")
+
 
     def register_ngo(self):
-     screen_manager = self.root.ids.screen_manager  
-     ngo_screen = screen_manager.get_screen('ngo_register')  
+        screen_manager = self.root.ids.screen_manager  
+        ngo_screen = screen_manager.get_screen('ngo_register')  
 
-     ngo_name = ngo_screen.ids.ngo_name.text
-     ngo_contact = ngo_screen.ids.ngo_contact.text
-     ngo_location = ngo_screen.ids.ngo_location.text
+        ngo_name = ngo_screen.ids.ngo_name.text
+        ngo_contact = ngo_screen.ids.ngo_contact.text
+        ngo_location = ngo_screen.ids.ngo_location.text
 
-     if ngo_name and ngo_contact and ngo_location:
-        self.ngos.append({
-            "NGO": ngo_name,
-            "Contact": ngo_contact,
-            "Location": ngo_location
-        })
+        if ngo_name and ngo_contact and ngo_location:
+            self.ngos.append({
+                "NGO": ngo_name,
+                "Contact": ngo_contact,
+                "Location": ngo_location
+            })
 
-    
-        ngo_screen.ids.ngo_name.text = ""
-        ngo_screen.ids.ngo_contact.text = ""
-        ngo_screen.ids.ngo_location.text = ""
+            ngo_screen.ids.ngo_name.text = ""
+            ngo_screen.ids.ngo_contact.text = ""
+            ngo_screen.ids.ngo_location.text = ""
 
-        self.show_dialog("Success", "NGO registered successfully!")
-        self.update_ngos()
-        self.change_screen('home')
-     else:
-        self.show_dialog("Error", "Please fill out all fields!")
+            self.show_dialog("Success", "NGO registered successfully!")
+            self.update_ngos()
+            self.change_screen('home')
+        else:
+            self.show_dialog("Error", "Please fill out all fields!")
 
     def update_ngos(self):
-     screen_manager = self.root.ids.screen_manager  
-     ngo_list = screen_manager.get_screen('view_ngos').ids.ngo_list  
+        screen_manager = self.root.ids.screen_manager  
+        ngo_list = screen_manager.get_screen('view_ngos').ids.ngo_list  
 
-     ngo_list.clear_widgets()  
+        ngo_list.clear_widgets()  
 
-     for ngo in self.ngos:
-        item_text = f"{ngo['NGO']} | Contact: {ngo['Contact']} | Location: {ngo['Location']}"
-        ngo_list.add_widget(OneLineListItem(text=item_text))
+        for ngo in self.ngos:
+            item_text = f"{ngo['NGO']} | Contact: {ngo['Contact']} | Location: {ngo['Location']}"
+            ngo_list.add_widget(OneLineListItem(text=item_text))
     
 
     def show_dialog(self, title, text):
