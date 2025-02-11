@@ -10,6 +10,8 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.core.window import Window
 import webbrowser
 
+
+
 Window.size = (360, 640)
 
 KV = """
@@ -17,6 +19,9 @@ MDNavigationLayout:
     ScreenManager:
         id: screen_manager
         LoginScreen:
+        RegisterScreen:
+        RegisterDonorScreen:
+        RegisterNGOScreen:
         HomeScreen:
         DonateScreen:
         NGORegisterScreen:
@@ -97,7 +102,164 @@ MDNavigationLayout:
                     height: "50dp"
                     md_bg_color: 205/255, 133/255, 63/255,
                     on_release: app.login()
+                MDRaisedButton:
+                    text: "Sign Up"
+                    size_hint: (1, None)
+                    height: "50dp"
+                    md_bg_color: 205/255, 133/255, 63/255,
+                    theme_text_color: "Custom"
+                    text_color: 1, 1, 1, 1 
+                    on_release: app.change_screen('register')
+
+<RegisterScreen>:
+    name: 'register'
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Register"
+            md_bg_color: 205/255, 133/255, 63/255
+            left_action_items: [["arrow-left", lambda x: app.change_screen('login')]]
+
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: [40, 50, 40,350]
+            spacing: 40
+            md_bg_color: 235/255, 220/255, 199/255, 1
+
+            MDRaisedButton:
+                text: "Register as Donor"
+                pos_hint: {"center_x": 0.5}
+                size_hint_x: 0.8
+                md_bg_color: 205/255, 133/255, 63/255,
+                theme_text_color: "Custom"
+                text_color: 1, 1, 1, 1 
+                on_release: app.change_screen('register_donor')
+            MDRaisedButton:
+                text: "Register as NGO"
+                pos_hint: {"center_x": 0.5}
+                size_hint_x: 0.8
+                md_bg_color: 205/255, 133/255, 63/255,
+                theme_text_color: "Custom"
+                text_color: 1, 1, 1, 1 
+                on_release: app.change_screen('register_ngo')
         
+                
+<RegisterDonorScreen>:
+    name: "register_donor"
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Register as Donor"
+            md_bg_color: 205/255, 133/255, 63/255
+            left_action_items: [["arrow-left", lambda x: app.change_screen('register')]]
+        
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: [40, 50, 40, 100]
+            spacing: 20
+            md_bg_color: 235/255, 220/255, 199/255, 1
+
+            MDTextField:
+                id: full_name
+                hint_text: "Full Name"
+                mode: "rectangle"
+
+            MDTextField:
+                id: email
+                hint_text: "Email Address"
+                mode: "rectangle"
+                input_type: "mail"
+
+            MDTextField:
+                id: phone
+                hint_text: "Phone Number"
+                mode: "rectangle"
+                input_type: "number"
+                max_text_length: 10
+
+            MDTextField:
+                id: address
+                hint_text: "Address / Location"
+                mode: "rectangle"
+
+            MDTextField:
+                id: password
+                hint_text: "Password"
+                mode: "rectangle"
+                password: True
+
+            MDRaisedButton:
+                text: "Register"
+                pos_hint: {"center_x": 0.5}
+                size_hint_x: 0.8
+                md_bg_color: 205/255, 133/255, 63/255,
+                theme_text_color: "Custom"
+                text_color: 1, 1, 1, 1 
+      
+                    
+<RegisterNGOScreen>:
+    name: "register_ngo"
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Register as NGO"
+            md_bg_color: 205/255, 133/255, 63/255
+            left_action_items: [["arrow-left", lambda x: app.change_screen('register')]]
+        
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: [40, 20, 40, 50]
+            spacing: 15
+            md_bg_color: 235/255, 220/255, 199/255, 1
+
+            MDTextField:
+                id: ngo_name
+                hint_text: "NGO Name"
+                mode: "rectangle"
+
+            MDTextField:
+                id: registration_number
+                hint_text: "Registration Number"
+                mode: "rectangle"
+
+            MDTextField:
+                id: email
+                hint_text: "Email Address"
+                mode: "rectangle"
+                input_type: "mail"
+
+            MDTextField:
+                id: phone
+                hint_text: "Phone Number"
+                mode: "rectangle"
+                input_type: "tel"
+                max_text_length: 10
+
+            MDTextField:
+                id: address
+                hint_text: "Office Address"
+                mode: "rectangle"
+
+            MDTextField:
+                id: city
+                hint_text: "City"
+                mode: "rectangle"
+
+            MDTextField:
+                id: ngo_type
+                hint_text: "Type of NGO (Food Relief, Homeless Support, etc.)"
+                mode: "rectangle"
+
+
+            MDRaisedButton:
+                text: "Register"
+                pos_hint: {"center_x": 0.5}
+                size_hint_x: 0.8
+                md_bg_color: 205/255, 133/255, 63/255,
+                theme_text_color: "Custom"
+                text_color: 1, 1, 1, 1 
+
+                
 <HomeScreen>:
     name: 'home'
     BoxLayout:
@@ -256,7 +418,7 @@ MDNavigationLayout:
         orientation: 'vertical'
         MDTopAppBar:
             title: "Donation Details"
-            md_bg_color: 205/255, 133/255, 63/255,
+            md_bg_color: 205/255, 133/255, 63/255
             left_action_items: [["arrow-left", lambda x: app.change_screen('home')]]
         MDBoxLayout:
             orientation: 'vertical'
@@ -283,15 +445,34 @@ MDNavigationLayout:
                 text: 'Open Location in Google Maps'
                 size_hint_x: 0.6
                 pos_hint: {'center_x': 0.5}
-                md_bg_color: 205/255, 133/255, 63/255,
+                md_bg_color: 205/255, 133/255, 63/255
                 theme_text_color: "Custom"
                 text_color: 1, 1, 1, 1 
                 on_release: app.open_google_maps()
+            MDRectangleFlatButton:
+                id: claim_donation_btn  # Add an ID for reference in Python
+                text: 'Claim Donation'
+                size_hint_x: 0.6
+                pos_hint: {'center_x': 0.5}
+                md_bg_color: 205/255, 133/255, 63/255
+                theme_text_color: "Custom"
+                text_color: 1, 1, 1, 1 
+
 """ 
 
  
 
+
 class LoginScreen(Screen):
+    pass
+
+class RegisterScreen(Screen):
+    pass
+
+class RegisterDonorScreen(Screen):
+    pass
+
+class RegisterNGOScreen(Screen):
     pass
 
 class HomeScreen(Screen):
@@ -451,3 +632,4 @@ class FoodWasteApp(MDApp):
 
 if __name__ == '__main__':
     FoodWasteApp().run()
+
