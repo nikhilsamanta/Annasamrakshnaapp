@@ -29,16 +29,19 @@ KV = """
 MDNavigationLayout:
     ScreenManager:
         id: screen_manager
+        
         LoginScreen:
         RegisterScreen:
         RegisterDonorScreen:
         RegisterNGOScreen:
+        
         HomeDonorScreen:
         DonateFoodScreen:
         ViewDonationsScreen:
+        
         HomeNGOScreen:
         ViewDonationsNgoScreen:
-
+        ViewDetailDonationNgoScreen:
    
 
 
@@ -472,6 +475,56 @@ MDNavigationLayout:
                 MDList:
                     id: donation_list
 
+<ViewDetailDonationNgoScreen>:
+    name: 'donation_detail'
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Donation Details"
+            md_bg_color: 205/255, 133/255, 63/255
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_ngo')]]
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: '20dp'
+            spacing: '10dp'
+            md_bg_color: 235/255, 220/255, 199/255, 1
+
+            MDLabel:
+                id: donor_name
+                text: "Donor: "
+                halign: 'center'
+
+            MDLabel:
+                id: food_type
+                text: "Food Type: "
+                halign: 'center'
+
+            MDLabel:
+                id: quantity
+                text: "Quantity: "
+                halign: 'center'
+            MDLabel:
+                id: location
+                text: "Location: "
+                halign: 'center'
+
+            MDRectangleFlatButton:
+                text: 'Open Location in Google Maps'
+                size_hint_x: 0.6
+                pos_hint: {'center_x': 0.5}
+                md_bg_color: 205/255, 133/255, 63/255
+                theme_text_color: "Custom"
+                text_color: 1, 1, 1, 1 
+                on_release: root.open_location_in_maps()
+
+            MDRectangleFlatButton:
+                id: claim_donation_btn  
+                text: 'Claim Donation'
+                size_hint_x: 0.6
+                pos_hint: {'center_x': 0.5}
+                md_bg_color: 205/255, 133/255, 63/255
+                theme_text_color: "Custom"
+                text_color: 1, 1, 1, 1 
 
 
                          
@@ -539,24 +592,30 @@ class DonateFoodScreen(Screen):
 
 class ViewDonationsScreen(Screen):
     def on_enter(self):
-
+        """Fetch and display only unclaimed donations when the screen is opened."""
         self.load_donations()
 
     def load_donations(self):
-        
+        """Retrieve and display only unclaimed donations from Firebase."""
         donation_ref = db.reference("donations")
         donations = donation_ref.get()
 
-        # Clear existing list
+        # Clear existing donation list
         self.ids.donation_list.clear_widgets()
 
         if donations:
+            has_unclaimed = False  # Track if any unclaimed donations exist
             for key, donation in donations.items():
-                donation_text = f"{donation['donor_name']} - {donation['food_type']} ({donation['quantity']}) at {donation['location']}"
-                self.ids.donation_list.add_widget(OneLineListItem(text=donation_text))
+                if donation.get("status") != "claimed":  # Only show unclaimed donations
+                    donation_text = f"{donation['donor_name']} - {donation['food_type']} ({donation['quantity']}) at {donation['location']}"
+                    self.ids.donation_list.add_widget(OneLineListItem(text=donation_text))
+                    has_unclaimed = True  # At least one unclaimed donation exists
+            
+            # If all donations are claimed, show a message
+            if not has_unclaimed:
+                self.ids.donation_list.add_widget(OneLineListItem(text="No unclaimed donations available."))
         else:
             self.ids.donation_list.add_widget(OneLineListItem(text="No donations available."))
-
 
 
 class HomeNGOScreen(Screen):
@@ -570,24 +629,67 @@ class HomeNGOScreen(Screen):
 
 class ViewDonationsNgoScreen(Screen):
     def on_enter(self):
-        """Fetch and display donations when the NGO screen is opened."""
+        """Fetch and display donations when the screen is opened."""
         self.load_donations()
 
     def load_donations(self):
-        """Retrieve donation data from Firebase Realtime Database."""
+        """Retrieve and display only unclaimed donations from Firebase."""
         donation_ref = db.reference("donations")
         donations = donation_ref.get()
 
-      
+    # Clear the donation list before adding new items
         self.ids.donation_list.clear_widgets()
 
         if donations:
             for key, donation in donations.items():
-                donation_text = f"{donation['food_type']} ({donation['quantity']}) from {donation['donor_name']} at {donation['location']}"
-                self.ids.donation_list.add_widget(OneLineListItem(text=donation_text))
+                if donation.get("status") != "claimed":  # Only show unclaimed donations
+                    donation_text = f"{donation['food_type']} ({donation['quantity']}) from {donation['donor_name']}"
+                    item = OneLineListItem(text=donation_text, on_release=lambda x, k=key: self.view_details(k))
+                    self.ids.donation_list.add_widget(item)
         else:
-            self.ids.donation_list.add_widget(OneLineListItem(text="No donations available."))
+            self.ids.donation_list.add_widget(OneLineListItem(text="No available donations."))
 
+    def view_details(self, donation_id):
+        """Navigate to the donation detail screen and pass the donation ID."""
+        detail_screen = self.manager.get_screen('donation_detail')
+        detail_screen.load_donation_details(donation_id)
+        self.manager.current = 'donation_detail'
+
+class ViewDetailDonationNgoScreen(Screen):
+    def load_donation_details(self, donation_id):
+        """Fetch detailed donation information from Firebase."""
+        donation_ref = db.reference(f"donations/{donation_id}")
+        donation = donation_ref.get()
+
+        if donation:
+            self.ids.donor_name.text = f"Donor: {donation['donor_name']}"
+            self.ids.food_type.text = f"Food Type: {donation['food_type']}"
+            self.ids.quantity.text = f"Quantity: {donation['quantity']}"
+            self.ids.location.text = f"Location: {donation['location']}"
+
+            # Pass the donation ID to the claim button for future reference
+            self.ids.claim_donation_btn.on_release = lambda: self.claim_donation(donation_id)
+
+    def open_location_in_maps(self):
+        """Open the pickup location in Google Maps."""
+        location = self.ids.location.text.replace("Location: ", "").strip()
+        url = f"https://www.google.com/maps/search/?api=1&query={location.replace(' ', '+')}"
+        webbrowser.open(url)
+
+    def claim_donation(self, donation_id):
+        """Mark the donation as claimed in Firebase and refresh the list."""
+        donation_ref = db.reference(f"donations/{donation_id}")
+        donation_ref.update({"status": "claimed"})  # Update the donation status
+
+    # Show a message
+        toast(f"Donation {donation_id} claimed!")
+        print(f"Donation {donation_id} claimed!")
+
+    # Navigate back to the donations list
+        self.manager.current = 'view_donations_ngo'
+
+    # Refresh the list to remove the claimed donation
+        self.manager.get_screen('view_donations_ngo').load_donations()
 
 class FoodWasteApp(MDApp):
     def build(self):
