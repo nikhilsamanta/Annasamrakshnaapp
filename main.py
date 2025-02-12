@@ -17,10 +17,11 @@ import bcrypt
 
 
 # Initialize Firebase
-cred = credentials.Certificate(r"") 
+cred = credentials.Certificate(r"")
 firebase_admin.initialize_app(cred, {
-    'databaseURL': ' '
+    'databaseURL': ''
 })
+
 
 Window.size = (360, 640)
 
@@ -33,6 +34,7 @@ MDNavigationLayout:
         RegisterDonorScreen:
         RegisterNGOScreen:
         HomeDonorScreen:
+        DonateFoodScreen:
         HomeNGOScreen:
 
    
@@ -239,7 +241,7 @@ MDNavigationLayout:
                 md_bg_color: 205/255, 133/255, 63/255,
                 theme_text_color: "Custom"
                 text_color: 1, 1, 1, 1 
-                on_release: app.register_ngo()
+                on_release: app.register_ngo(); 
 
 <HomeDonorScreen>:
     name: 'home_donor'
@@ -270,7 +272,8 @@ MDNavigationLayout:
                     pos_hint: {"center_x": 0.5}
                     size_hint: (0.8, 0)
                     md_bg_color: 205/255, 133/255, 63/255,  
-                    
+                    on_release: app.change_screen('donate_food')
+
                 MDRaisedButton:
                     text: "View Donations"
                     pos_hint: {"center_x": 0.5}
@@ -322,9 +325,36 @@ MDNavigationLayout:
                 text: "Log-Out"
                 icon: "logout"
                 md_bg_color: 235/255, 220/255, 199/255, 1
-                on_release: app.logout(); nav_drawer.set_state("close")
+                on_release: root.logout(); 
             
-                
+<DonateFoodScreen>:
+    name: 'donate_food'
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Donate Food"
+            md_bg_color: 205/255, 133/255, 63/255,
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_donor')]]
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: [40, 50, 40, 200]
+            md_bg_color: 235/255, 220/255, 199/255, 1
+            MDTextField:
+                id: donor_name
+                hint_text: "Donor Name"
+            MDTextField:
+                id: food_type
+                hint_text: "Food Type"
+            MDTextField:
+                id: quantity
+                hint_text: "Quantity "
+            MDTextField:
+                id: location
+                hint_text: "Pickup Location"
+            MDRaisedButton:
+                text: "Submit"
+                size_hint: (1, None) 
+                md_bg_color: 205/255, 133/255, 63/255,              
                 
 
 <HomeNGOScreen>:
@@ -400,7 +430,8 @@ MDNavigationLayout:
                 text: "Log-Out"
                 icon: "logout"
                 md_bg_color: 235/255, 220/255, 199/255, 1
-                on_release: app.logout(); nav_drawer.set_state("close")
+                on_release: root.logout();
+                
 """ 
 
 class LoginScreen(Screen):
@@ -416,10 +447,25 @@ class RegisterNGOScreen(Screen):
     pass
 
 class HomeDonorScreen(Screen):
+    def logout(self):
+        self.ids.nav_drawer_donor.set_state("close")
+        # Perform logout actions here, such as clearing the session
+        print("User logged out")
+        
+        # Navigate to the login screen
+        self.manager.current = 'login'
+
+class DonateFoodScreen(Screen):
     pass
 
 class HomeNGOScreen(Screen):
-    pass
+    def logout(self):
+        self.ids.nav_drawer_ngo.set_state("close")
+        # Perform logout actions here, such as clearing the session
+        print("User logged out")
+        
+        # Navigate to the login screen
+        self.manager.current = 'login'
 
 class FoodWasteApp(MDApp):
     def build(self):
@@ -463,11 +509,7 @@ class FoodWasteApp(MDApp):
 
         toast("Invalid credentials")
     
-    def logout(self):
-        self.is_donor = False 
-        self.root.ids.screen_manager.current = "login"  
-        self.root.ids.nav_drawer.set_state("close") 
-        print("User logged out successfully")
+
 
     def register_donor(self):
         full_name = self.root.ids.screen_manager.get_screen('register_donor').ids.full_name.text
