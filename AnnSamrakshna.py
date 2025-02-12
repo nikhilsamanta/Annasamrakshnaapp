@@ -41,6 +41,7 @@ MDNavigationLayout:
         DonateFoodScreen:
         ViewDonationsScreen:
         ViewNGOsScreen:
+        ViewDetailNgoScreen:
         
         HomeNGOScreen:
         ViewDonationsNgoScreen:
@@ -404,6 +405,66 @@ MDNavigationLayout:
                 MDList:
                     id: ngo_list 
 
+                    
+<ViewDetailNgoScreen>:
+    name: "view_detail_ngo"
+    md_bg_color: 235/255, 220/255, 199/255, 1
+
+    BoxLayout:
+        orientation: "vertical"
+        md_bg_color: 235/255, 220/255, 199/255, 1
+
+        MDTopAppBar:
+            title: "NGO Details"
+            md_bg_color: 205/255, 133/255, 63/255
+            left_action_items: [["arrow-left", lambda x: app.change_screen("view_ngos")]]  # Back button
+
+        ScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                adaptive_height: True
+                padding: dp(20)
+                spacing: dp(20)
+                md_bg_color: 235/255, 220/255, 199/255, 1
+
+
+                MDCard:
+                    orientation: "vertical"
+                    padding: dp(45)
+                    size_hint: None, None
+                    size: dp(320), dp(536)
+                    md_bg_color: 1, 1, 1, 1
+                    elevation: 4
+                    radius: dp(12)
+
+                    MDLabel:
+                        id: ngo_name
+                        text: "NGO Name"
+                        font_style: "H5"
+                        theme_text_color: "Primary"
+                        bold: True
+
+                    MDLabel:
+                        id: ngo_type
+                        text: "NGO Type"
+                        theme_text_color: "Secondary"
+
+                    MDLabel:
+                        id: ngo_address
+                        text: "Address"
+                        theme_text_color: "Hint"
+
+                    MDLabel:
+                        id: ngo_phone
+                        text: "Phone"
+                        theme_text_color: "Secondary"
+
+                    MDLabel:
+                        id: ngo_email
+                        text: "Email"
+                        theme_text_color: "Secondary"
+ 
+
 <HomeNGOScreen>:
     name: 'home_ngo'
     BoxLayout:
@@ -664,18 +725,18 @@ class ViewNGOsScreen(Screen):
 
     def fetch_ngos(self):
         """Fetch NGOs from Firebase and update the list."""
-        ref = db.reference('ngos')  
+        ref = db.reference('ngos')  # Adjust if needed
         ngos = ref.get()
 
         if ngos:
             self.update_list(ngos)
         else:
-            self.update_list({})  
+            self.update_list({})  # If no data, show an empty list
 
     @mainthread
     def update_list(self, ngos):
         """Update the UI with fetched NGOs."""
-        self.ids.ngo_list.clear_widgets()
+        self.ids.ngo_list.clear_widgets()  # Clear old list
 
         if ngos:
             for ngo_id, ngo_data in ngos.items():
@@ -685,22 +746,36 @@ class ViewNGOsScreen(Screen):
                 phone = ngo_data.get("phone", "No Contact")
                 email = ngo_data.get("email", "No Email")
 
-                
+                # Create list item with tap action
                 item = ThreeLineIconListItem(
                     text=f"{ngo_name} ({ngo_type})",
                     secondary_text=f"Address: {address}",
-                    tertiary_text=f"Phone: {phone}\n|Email: {email}",
+                    tertiary_text=f"Phone: {phone} \nEmail: {email}",
+                    on_release=lambda x, data=ngo_data: self.view_ngo_details(data)
                 )
 
-              
-                item.add_widget(IconLeftWidget(icon="charity"))  
+                # Add NGO icon
+                item.add_widget(IconLeftWidget(icon="charity"))
 
                 self.ids.ngo_list.add_widget(item)
         else:
             self.ids.ngo_list.add_widget(ThreeLineIconListItem(text="No NGOs registered."))
 
+    def view_ngo_details(self, ngo_data):
+        """Navigate to ViewDetailNgoScreen and set NGO details."""
+        detail_screen = self.manager.get_screen("view_detail_ngo")
+        detail_screen.update_details(ngo_data)
+        self.manager.current = "view_detail_ngo"
 
 
+class ViewDetailNgoScreen(Screen):
+    def update_details(self, ngo_data):
+        """Update UI elements with NGO details."""
+        self.ids.ngo_name.text = f"NGO: {ngo_data.get('ngo_name', 'Unknown')}"
+        self.ids.ngo_type.text = f"Type: {ngo_data.get('ngo_type', 'N/A')}"
+        self.ids.ngo_address.text = f"Address: {ngo_data.get('address', 'N/A')}"
+        self.ids.ngo_phone.text = f"Phone: {ngo_data.get('phone', 'N/A')}"
+        self.ids.ngo_email.text = f"Email: {ngo_data.get('email', 'N/A')}"
 
 
 class HomeNGOScreen(Screen):
