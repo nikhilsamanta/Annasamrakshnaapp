@@ -17,7 +17,7 @@ import bcrypt
 from kivy.clock import Clock
 import time
 
-# Initialize Firebase
+
 cred = credentials.Certificate(r"")
 firebase_admin.initialize_app(cred, {
     'databaseURL': ''
@@ -37,6 +37,7 @@ MDNavigationLayout:
         DonateFoodScreen:
         ViewDonationsScreen:
         HomeNGOScreen:
+        ViewDonationsNgoScreen:
 
    
 
@@ -377,6 +378,7 @@ MDNavigationLayout:
                     id: donation_list
                 
 
+
 <HomeNGOScreen>:
     name: 'home_ngo'
     BoxLayout:
@@ -408,7 +410,8 @@ MDNavigationLayout:
                     pos_hint: {"center_x": 0.5}
                     size_hint: (0.8, 0) 
                     md_bg_color: 205/255, 133/255, 63/255,
-                    
+                    on_release: app.change_screen('view_donations_ngo')
+
                 MDRaisedButton:
                     text: "View NGOs"
                     pos_hint: {"center_x": 0.5}
@@ -451,7 +454,27 @@ MDNavigationLayout:
                 icon: "logout"
                 md_bg_color: 235/255, 220/255, 199/255, 1
                 on_release: root.logout();
-                
+
+
+<ViewDonationsNgoScreen>:
+    name: 'view_donations_ngo'
+    BoxLayout:
+        orientation: 'vertical'
+        
+        MDTopAppBar:
+            title: "View Donations"
+            md_bg_color: 205/255, 133/255, 63/255,
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_ngo')]]
+        MDBoxLayout:
+            orientation: 'vertical'
+            md_bg_color: 235/255, 220/255, 199/255, 1
+            ScrollView:
+                MDList:
+                    id: donation_list
+
+
+
+                         
 """ 
 
 class LoginScreen(Screen):
@@ -516,15 +539,15 @@ class DonateFoodScreen(Screen):
 
 class ViewDonationsScreen(Screen):
     def on_enter(self):
-        
+
         self.load_donations()
 
     def load_donations(self):
-      
+        
         donation_ref = db.reference("donations")
         donations = donation_ref.get()
 
-    
+        # Clear existing list
         self.ids.donation_list.clear_widgets()
 
         if donations:
@@ -535,6 +558,7 @@ class ViewDonationsScreen(Screen):
             self.ids.donation_list.add_widget(OneLineListItem(text="No donations available."))
 
 
+
 class HomeNGOScreen(Screen):
     def logout(self):
         self.ids.nav_drawer_ngo.set_state("close")
@@ -543,6 +567,27 @@ class HomeNGOScreen(Screen):
         
        
         self.manager.current = 'login'
+
+class ViewDonationsNgoScreen(Screen):
+    def on_enter(self):
+        """Fetch and display donations when the NGO screen is opened."""
+        self.load_donations()
+
+    def load_donations(self):
+        """Retrieve donation data from Firebase Realtime Database."""
+        donation_ref = db.reference("donations")
+        donations = donation_ref.get()
+
+      
+        self.ids.donation_list.clear_widgets()
+
+        if donations:
+            for key, donation in donations.items():
+                donation_text = f"{donation['food_type']} ({donation['quantity']}) from {donation['donor_name']} at {donation['location']}"
+                self.ids.donation_list.add_widget(OneLineListItem(text=donation_text))
+        else:
+            self.ids.donation_list.add_widget(OneLineListItem(text="No donations available."))
+
 
 class FoodWasteApp(MDApp):
     def build(self):
