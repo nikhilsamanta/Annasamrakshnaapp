@@ -526,13 +526,13 @@ MDNavigationLayout:
                 text: "View Donations"
                 icon: "gift"
                 md_bg_color: 235/255, 220/255, 199/255, 1
-                on_release: app.change_screen('view_donations'); nav_drawer_ngo.set_state("close")
+                on_release: app.change_screen('view_donations_ngo'); nav_drawer_ngo.set_state("close")
 
             MDNavigationDrawerItem:
                 text: "View NGO's"
                 icon: "account-group"
                 md_bg_color: 235/255, 220/255, 199/255, 1
-                on_release: app.chane_screen('view_ngos_ngo'); nav_drawer_ngo.set_state("close")
+                on_release: app.change_screen('view_ngos_ngo'); nav_drawer_ngo.set_state("close")
             MDNavigationDrawerItem:
                 text: "Settings"
                 icon: "wrench"
@@ -568,7 +568,7 @@ MDNavigationLayout:
         MDTopAppBar:
             title: "Donation Details"
             md_bg_color: 205/255, 133/255, 63/255
-            left_action_items: [["arrow-left", lambda x: app.change_screen('home_ngo')]]
+            left_action_items: [["arrow-left", lambda x: app.change_screen('view_donations_ngo')]]
         MDBoxLayout:
             orientation: 'vertical'
             padding: '20dp'
@@ -620,7 +620,7 @@ MDNavigationLayout:
         MDTopAppBar:
             title: "View NGOs"
             md_bg_color: 205/255, 133/255, 63/255,
-            left_action_items: [["arrow-left", lambda x: app.change_screen('home_donor')]]
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_ngo')]]
         
         MDBoxLayout:
             orientation: 'vertical'
@@ -892,7 +892,7 @@ class ViewNGOsNgoScreen(Screen):
         else:
             self.ids.ngo_list.add_widget(ThreeLineIconListItem(text="No NGOs registered."))
 
-class FoodWasteApp(MDApp):
+class AnnSamrakshnaApp(MDApp):
     def build(self):
         self.title = "Annasamrakshna"
         self.theme_cls.primary_palette = "DeepOrange"
@@ -1033,4 +1033,4 @@ class FoodWasteApp(MDApp):
 
 
 if __name__ == '__main__':
-    FoodWasteApp().run()
+    AnnSamrakshnaApp().run()
