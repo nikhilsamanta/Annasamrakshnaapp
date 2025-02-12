@@ -20,7 +20,7 @@ import time
 # Initialize Firebase
 cred = credentials.Certificate(r"")
 firebase_admin.initialize_app(cred, {
-    'databaseURL': ' '
+    'databaseURL': ''
 })
 
 Window.size = (360, 640)
@@ -35,6 +35,7 @@ MDNavigationLayout:
         RegisterNGOScreen:
         HomeDonorScreen:
         DonateFoodScreen:
+        ViewDonationsScreen:
         HomeNGOScreen:
 
    
@@ -279,7 +280,7 @@ MDNavigationLayout:
                     pos_hint: {"center_x": 0.5}
                     size_hint: (0.8, 0) 
                     md_bg_color: 205/255, 133/255, 63/255,
-                    
+                    on_release: app.change_screen('view_donations')
                 MDRaisedButton:
                     text: "View NGOs"
                     pos_hint: {"center_x": 0.5}
@@ -326,7 +327,9 @@ MDNavigationLayout:
                 icon: "logout"
                 md_bg_color: 235/255, 220/255, 199/255, 1
                 on_release: root.logout(); 
-            
+
+
+          
 <DonateFoodScreen>:
     name: 'donate_food'
     BoxLayout:
@@ -356,6 +359,23 @@ MDNavigationLayout:
                 size_hint: (1, None) 
                 md_bg_color: 205/255, 133/255, 63/255,              
                 on_release: root.submit_donation()
+
+<ViewDonationsScreen>:
+    name: 'view_donations'
+    BoxLayout:
+        orientation: 'vertical'
+        
+        MDTopAppBar:
+            title: "View Donations"
+            md_bg_color: 205/255, 133/255, 63/255,
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_donor')]]
+        MDBoxLayout:
+            orientation: 'vertical'
+            md_bg_color: 235/255, 220/255, 199/255, 1
+            ScrollView:
+                MDList:
+                    id: donation_list
+                
 
 <HomeNGOScreen>:
     name: 'home_ngo'
@@ -449,10 +469,10 @@ class RegisterNGOScreen(Screen):
 class HomeDonorScreen(Screen):
     def logout(self):
         self.ids.nav_drawer_donor.set_state("close")
-        # Perform logout actions here, such as clearing the session
+
         print("User logged out")
         
-        # Navigate to the login screen
+      
         self.manager.current = 'login'
 
 class DonateFoodScreen(Screen):
@@ -462,29 +482,29 @@ class DonateFoodScreen(Screen):
         quantity = self.ids.quantity.text.strip()
         location = self.ids.location.text.strip()
 
-        # Validate inputs
         if not donor_name or not food_type or not quantity or not location:
+            toast("All fields are required")
             print("All fields are required!")
             return
 
-        # Generate a unique key based on timestamp
+       
         donation_key = f"donation_{int(time.time())}"
 
-        # Create a donation dictionary
+
         donation_data = {
             "donor_name": donor_name,
             "food_type": food_type,
             "quantity": quantity,
             "location": location,
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")  # Store the time of donation
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S") 
         }
 
-        # Store data in Firebase Realtime Database
+ 
         db.reference("donations").child(donation_key).set(donation_data)
 
         print("Donation submitted successfully!")
         toast("Donation Submitted successfully!!")
-        # Clear input fields after submission
+     
         Clock.schedule_once(self.clear_fields, 0.5)
 
     def clear_fields(self, dt):
@@ -493,13 +513,18 @@ class DonateFoodScreen(Screen):
         self.ids.quantity.text = ""
         self.ids.location.text = ""
 
+
+class ViewDonationsScreen(Screen):
+    pass
+
+
 class HomeNGOScreen(Screen):
     def logout(self):
         self.ids.nav_drawer_ngo.set_state("close")
-        # Perform logout actions here, such as clearing the session
+        
         print("User logged out")
         
-        # Navigate to the login screen
+       
         self.manager.current = 'login'
 
 class FoodWasteApp(MDApp):
