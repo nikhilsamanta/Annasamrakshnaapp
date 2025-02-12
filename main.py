@@ -14,14 +14,14 @@ from firebase_admin import credentials, db
 from functools import partial
 from kivymd.toast import toast
 import bcrypt
-
+from kivy.clock import Clock
+import time
 
 # Initialize Firebase
 cred = credentials.Certificate(r"")
 firebase_admin.initialize_app(cred, {
-    'databaseURL': ''
+    'databaseURL': ' '
 })
-
 
 Window.size = (360, 640)
 
@@ -355,7 +355,7 @@ MDNavigationLayout:
                 text: "Submit"
                 size_hint: (1, None) 
                 md_bg_color: 205/255, 133/255, 63/255,              
-                
+                on_release: root.submit_donation()
 
 <HomeNGOScreen>:
     name: 'home_ngo'
@@ -456,7 +456,42 @@ class HomeDonorScreen(Screen):
         self.manager.current = 'login'
 
 class DonateFoodScreen(Screen):
-    pass
+    def submit_donation(self):
+        donor_name = self.ids.donor_name.text.strip()
+        food_type = self.ids.food_type.text.strip()
+        quantity = self.ids.quantity.text.strip()
+        location = self.ids.location.text.strip()
+
+        # Validate inputs
+        if not donor_name or not food_type or not quantity or not location:
+            print("All fields are required!")
+            return
+
+        # Generate a unique key based on timestamp
+        donation_key = f"donation_{int(time.time())}"
+
+        # Create a donation dictionary
+        donation_data = {
+            "donor_name": donor_name,
+            "food_type": food_type,
+            "quantity": quantity,
+            "location": location,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")  # Store the time of donation
+        }
+
+        # Store data in Firebase Realtime Database
+        db.reference("donations").child(donation_key).set(donation_data)
+
+        print("Donation submitted successfully!")
+        toast("Donation Submitted successfully!!")
+        # Clear input fields after submission
+        Clock.schedule_once(self.clear_fields, 0.5)
+
+    def clear_fields(self, dt):
+        self.ids.donor_name.text = ""
+        self.ids.food_type.text = ""
+        self.ids.quantity.text = ""
+        self.ids.location.text = ""
 
 class HomeNGOScreen(Screen):
     def logout(self):
