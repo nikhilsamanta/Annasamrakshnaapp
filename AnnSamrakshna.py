@@ -5,6 +5,7 @@ from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import OneLineListItem
 from kivymd.uix.textfield import MDTextField
+from kivymd.uix.label import MDLabel
 from kivymd.uix.navigationdrawer import MDNavigationDrawer, MDNavigationLayout, MDNavigationDrawerMenu, MDNavigationDrawerHeader, MDNavigationDrawerItem
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.core.window import Window
@@ -16,7 +17,8 @@ from kivymd.toast import toast
 import bcrypt
 from kivy.clock import Clock
 import time
-
+from kivy.clock import mainthread
+from kivymd.uix.list import ThreeLineIconListItem, MDList, IconLeftWidget
 
 cred = credentials.Certificate(r"")
 firebase_admin.initialize_app(cred, {
@@ -38,10 +40,12 @@ MDNavigationLayout:
         HomeDonorScreen:
         DonateFoodScreen:
         ViewDonationsScreen:
+        ViewNGOsScreen:
         
         HomeNGOScreen:
         ViewDonationsNgoScreen:
         ViewDetailDonationNgoScreen:
+        ViewNGOsNgoScreen:
    
 
 
@@ -277,20 +281,21 @@ MDNavigationLayout:
                     pos_hint: {"center_x": 0.5}
                     size_hint: (0.8, 0)
                     md_bg_color: 205/255, 133/255, 63/255,  
-                    on_release: app.change_screen('donate_food')
+                    on_release: app.change_screen('donate_food'); nav_drawer_donor.set_state("close")
 
                 MDRaisedButton:
                     text: "View Donations"
                     pos_hint: {"center_x": 0.5}
                     size_hint: (0.8, 0) 
                     md_bg_color: 205/255, 133/255, 63/255,
-                    on_release: app.change_screen('view_donations')
+                    on_release: app.change_screen('view_donations'); nav_drawer_donor.set_state("close")
                 MDRaisedButton:
                     text: "View NGOs"
                     pos_hint: {"center_x": 0.5}
                     size_hint: (0.8, 0) 
                     md_bg_color: 205/255, 133/255, 63/255,
-        
+                    on_release: app.change_screen('view_ngos'); nav_drawer_donor.set_state("close")
+                    
     MDNavigationDrawer:
         id: nav_drawer_donor
         md_bg_color: 235/255, 220/255, 199/255, 1
@@ -310,17 +315,19 @@ MDNavigationLayout:
                 text: "Donate Food"
                 icon: "food"
                 md_bg_color: 235/255, 220/255, 199/255, 1
-            
+                on_release: app.change_screen('donate_food'); nav_drawer_donor.set_state("close")
+
             MDNavigationDrawerItem:
                 text: "View Donations"
                 icon: "gift"
                 md_bg_color: 235/255, 220/255, 199/255, 1
+                on_release: app.change_screen('view_donations'); nav_drawer_donor.set_state("close")
 
             MDNavigationDrawerItem:
                 text: "View NGO's"
                 icon: "account-group"
                 md_bg_color: 235/255, 220/255, 199/255, 1
-
+                on_release: app.change_screen('view_ngos'); nav_drawer_donor.set_state("close")
             MDNavigationDrawerItem:
                 text: "Settings"
                 icon: "wrench"
@@ -380,7 +387,22 @@ MDNavigationLayout:
                 MDList:
                     id: donation_list
                 
-
+<ViewNGOsScreen>:
+    name: 'view_ngos'
+    BoxLayout:
+        orientation: 'vertical'
+        md_bg_color: 235/255, 220/255, 199/255, 1
+        MDTopAppBar:
+            title: "View NGOs"
+            md_bg_color: 205/255, 133/255, 63/255,
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_donor')]]
+        
+        MDBoxLayout:
+            orientation: 'vertical'
+            md_bg_color: 235/255, 220/255, 199/255, 1
+            ScrollView:
+                MDList:
+                    id: ngo_list 
 
 <HomeNGOScreen>:
     name: 'home_ngo'
@@ -413,14 +435,16 @@ MDNavigationLayout:
                     pos_hint: {"center_x": 0.5}
                     size_hint: (0.8, 0) 
                     md_bg_color: 205/255, 133/255, 63/255,
-                    on_release: app.change_screen('view_donations_ngo')
+                    on_release: app.change_screen('view_donations_ngo');nav_drawer_ngo.set_state("close")
 
                 MDRaisedButton:
                     text: "View NGOs"
                     pos_hint: {"center_x": 0.5}
                     size_hint: (0.8, 0) 
                     md_bg_color: 205/255, 133/255, 63/255,
-        
+                    on_release: app.change_screen('view_ngos_ngo'); nav_drawer_ngo.set_state("close")
+                    
+
     MDNavigationDrawer:
         id: nav_drawer_ngo
         md_bg_color: 235/255, 220/255, 199/255, 1
@@ -441,12 +465,13 @@ MDNavigationLayout:
                 text: "View Donations"
                 icon: "gift"
                 md_bg_color: 235/255, 220/255, 199/255, 1
+                on_release: app.change_screen('view_donations'); nav_drawer_ngo.set_state("close")
 
             MDNavigationDrawerItem:
                 text: "View NGO's"
                 icon: "account-group"
                 md_bg_color: 235/255, 220/255, 199/255, 1
-
+                on_release: app.chane_screen('view_ngos_ngo'); nav_drawer_ngo.set_state("close")
             MDNavigationDrawerItem:
                 text: "Settings"
                 icon: "wrench"
@@ -526,7 +551,22 @@ MDNavigationLayout:
                 theme_text_color: "Custom"
                 text_color: 1, 1, 1, 1 
 
-
+<ViewNGOsNgoScreen>:
+    name: 'view_ngos_ngo'
+    BoxLayout:
+        orientation: 'vertical'
+        md_bg_color: 235/255, 220/255, 199/255, 1
+        MDTopAppBar:
+            title: "View NGOs"
+            md_bg_color: 205/255, 133/255, 63/255,
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_donor')]]
+        
+        MDBoxLayout:
+            orientation: 'vertical'
+            md_bg_color: 235/255, 220/255, 199/255, 1
+            ScrollView:
+                MDList:
+                    id: ngo_list 
                          
 """ 
 
@@ -617,6 +657,51 @@ class ViewDonationsScreen(Screen):
         else:
             self.ids.donation_list.add_widget(OneLineListItem(text="No donations available."))
 
+class ViewNGOsScreen(Screen):
+    def on_pre_enter(self):
+        """Clear and reload NGOs every time the screen is entered."""
+        self.fetch_ngos()
+
+    def fetch_ngos(self):
+        """Fetch NGOs from Firebase and update the list."""
+        ref = db.reference('ngos')  # Adjust if needed
+        ngos = ref.get()
+
+        if ngos:
+            self.update_list(ngos)
+        else:
+            self.update_list({})  # If no data, show an empty list
+
+    @mainthread
+    def update_list(self, ngos):
+        """Update the UI with fetched NGOs."""
+        self.ids.ngo_list.clear_widgets()  # Clear old list
+
+        if ngos:
+            for ngo_id, ngo_data in ngos.items():
+                ngo_name = ngo_data.get("ngo_name", "Unknown NGO")
+                ngo_type = ngo_data.get("ngo_type", "No Type Provided")
+                address = ngo_data.get("address", "No Address")
+                phone = ngo_data.get("phone", "No Contact")
+                email = ngo_data.get("email", "No Email")
+
+                
+                item = ThreeLineIconListItem(
+                    text=f"{ngo_name} ({ngo_type})",
+                    secondary_text=f"Address: {address}",
+                    tertiary_text=f"Phone: {phone}\n|Email: {email}",
+                )
+
+                # Add NGO icon
+                item.add_widget(IconLeftWidget(icon="charity"))  # Icon for NGOs
+
+                self.ids.ngo_list.add_widget(item)
+        else:
+            self.ids.ngo_list.add_widget(ThreeLineIconListItem(text="No NGOs registered."))
+
+
+
+
 
 class HomeNGOScreen(Screen):
     def logout(self):
@@ -690,6 +775,48 @@ class ViewDetailDonationNgoScreen(Screen):
 
     # Refresh the list to remove the claimed donation
         self.manager.get_screen('view_donations_ngo').load_donations()
+
+class ViewNGOsNgoScreen(Screen):
+    def on_pre_enter(self):
+        """Clear and reload NGOs every time the screen is entered."""
+        self.fetch_ngos()
+
+    def fetch_ngos(self):
+        """Fetch NGOs from Firebase and update the list."""
+        ref = db.reference('ngos')  # Adjust if needed
+        ngos = ref.get()
+
+        if ngos:
+            self.update_list(ngos)
+        else:
+            self.update_list({})  # If no data, show an empty list
+
+    @mainthread
+    def update_list(self, ngos):
+        """Update the UI with fetched NGOs."""
+        self.ids.ngo_list.clear_widgets()  # Clear old list
+
+        if ngos:
+            for ngo_id, ngo_data in ngos.items():
+                ngo_name = ngo_data.get("ngo_name", "Unknown NGO")
+                ngo_type = ngo_data.get("ngo_type", "No Type Provided")
+                address = ngo_data.get("address", "No Address")
+                phone = ngo_data.get("phone", "No Contact")
+                email = ngo_data.get("email", "No Email")
+
+                
+                item = ThreeLineIconListItem(
+                    text=f"{ngo_name} ({ngo_type})",
+                    secondary_text=f"Address: {address}",
+                    tertiary_text=f"Phone: {phone}\n|Email: {email}",
+                )
+
+                # Add NGO icon
+                item.add_widget(IconLeftWidget(icon="charity"))  # Icon for NGOs
+
+                self.ids.ngo_list.add_widget(item)
+        else:
+            self.ids.ngo_list.add_widget(ThreeLineIconListItem(text="No NGOs registered."))
 
 class FoodWasteApp(MDApp):
     def build(self):
