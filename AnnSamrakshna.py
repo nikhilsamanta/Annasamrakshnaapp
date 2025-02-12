@@ -640,18 +640,18 @@ class ViewDonationsScreen(Screen):
         donation_ref = db.reference("donations")
         donations = donation_ref.get()
 
-        # Clear existing donation list
+       
         self.ids.donation_list.clear_widgets()
 
         if donations:
-            has_unclaimed = False  # Track if any unclaimed donations exist
+            has_unclaimed = False  
             for key, donation in donations.items():
-                if donation.get("status") != "claimed":  # Only show unclaimed donations
+                if donation.get("status") != "claimed": 
                     donation_text = f"{donation['donor_name']} - {donation['food_type']} ({donation['quantity']}) at {donation['location']}"
                     self.ids.donation_list.add_widget(OneLineListItem(text=donation_text))
-                    has_unclaimed = True  # At least one unclaimed donation exists
+                    has_unclaimed = True  
             
-            # If all donations are claimed, show a message
+       
             if not has_unclaimed:
                 self.ids.donation_list.add_widget(OneLineListItem(text="No unclaimed donations available."))
         else:
@@ -664,18 +664,18 @@ class ViewNGOsScreen(Screen):
 
     def fetch_ngos(self):
         """Fetch NGOs from Firebase and update the list."""
-        ref = db.reference('ngos')  # Adjust if needed
+        ref = db.reference('ngos')  
         ngos = ref.get()
 
         if ngos:
             self.update_list(ngos)
         else:
-            self.update_list({})  # If no data, show an empty list
+            self.update_list({})  
 
     @mainthread
     def update_list(self, ngos):
         """Update the UI with fetched NGOs."""
-        self.ids.ngo_list.clear_widgets()  # Clear old list
+        self.ids.ngo_list.clear_widgets()
 
         if ngos:
             for ngo_id, ngo_data in ngos.items():
@@ -692,8 +692,8 @@ class ViewNGOsScreen(Screen):
                     tertiary_text=f"Phone: {phone}\n|Email: {email}",
                 )
 
-                # Add NGO icon
-                item.add_widget(IconLeftWidget(icon="charity"))  # Icon for NGOs
+              
+                item.add_widget(IconLeftWidget(icon="charity"))  
 
                 self.ids.ngo_list.add_widget(item)
         else:
@@ -722,12 +722,12 @@ class ViewDonationsNgoScreen(Screen):
         donation_ref = db.reference("donations")
         donations = donation_ref.get()
 
-    # Clear the donation list before adding new items
+
         self.ids.donation_list.clear_widgets()
 
         if donations:
             for key, donation in donations.items():
-                if donation.get("status") != "claimed":  # Only show unclaimed donations
+                if donation.get("status") != "claimed":  
                     donation_text = f"{donation['food_type']} ({donation['quantity']}) from {donation['donor_name']}"
                     item = OneLineListItem(text=donation_text, on_release=lambda x, k=key: self.view_details(k))
                     self.ids.donation_list.add_widget(item)
@@ -752,7 +752,7 @@ class ViewDetailDonationNgoScreen(Screen):
             self.ids.quantity.text = f"Quantity: {donation['quantity']}"
             self.ids.location.text = f"Location: {donation['location']}"
 
-            # Pass the donation ID to the claim button for future reference
+           
             self.ids.claim_donation_btn.on_release = lambda: self.claim_donation(donation_id)
 
     def open_location_in_maps(self):
@@ -764,16 +764,15 @@ class ViewDetailDonationNgoScreen(Screen):
     def claim_donation(self, donation_id):
         """Mark the donation as claimed in Firebase and refresh the list."""
         donation_ref = db.reference(f"donations/{donation_id}")
-        donation_ref.update({"status": "claimed"})  # Update the donation status
+        donation_ref.update({"status": "claimed"}) 
 
-    # Show a message
+   
         toast(f"Donation {donation_id} claimed!")
         print(f"Donation {donation_id} claimed!")
 
-    # Navigate back to the donations list
         self.manager.current = 'view_donations_ngo'
 
-    # Refresh the list to remove the claimed donation
+
         self.manager.get_screen('view_donations_ngo').load_donations()
 
 class ViewNGOsNgoScreen(Screen):
@@ -783,18 +782,18 @@ class ViewNGOsNgoScreen(Screen):
 
     def fetch_ngos(self):
         """Fetch NGOs from Firebase and update the list."""
-        ref = db.reference('ngos')  # Adjust if needed
+        ref = db.reference('ngos')  
         ngos = ref.get()
 
         if ngos:
             self.update_list(ngos)
         else:
-            self.update_list({})  # If no data, show an empty list
+            self.update_list({})  
 
     @mainthread
     def update_list(self, ngos):
         """Update the UI with fetched NGOs."""
-        self.ids.ngo_list.clear_widgets()  # Clear old list
+        self.ids.ngo_list.clear_widgets()  
 
         if ngos:
             for ngo_id, ngo_data in ngos.items():
@@ -811,8 +810,8 @@ class ViewNGOsNgoScreen(Screen):
                     tertiary_text=f"Phone: {phone}\n|Email: {email}",
                 )
 
-                # Add NGO icon
-                item.add_widget(IconLeftWidget(icon="charity"))  # Icon for NGOs
+               
+                item.add_widget(IconLeftWidget(icon="charity"))  
 
                 self.ids.ngo_list.add_widget(item)
         else:
