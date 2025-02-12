@@ -515,7 +515,24 @@ class DonateFoodScreen(Screen):
 
 
 class ViewDonationsScreen(Screen):
-    pass
+    def on_enter(self):
+        
+        self.load_donations()
+
+    def load_donations(self):
+      
+        donation_ref = db.reference("donations")
+        donations = donation_ref.get()
+
+    
+        self.ids.donation_list.clear_widgets()
+
+        if donations:
+            for key, donation in donations.items():
+                donation_text = f"{donation['donor_name']} - {donation['food_type']} ({donation['quantity']}) at {donation['location']}"
+                self.ids.donation_list.add_widget(OneLineListItem(text=donation_text))
+        else:
+            self.ids.donation_list.add_widget(OneLineListItem(text="No donations available."))
 
 
 class HomeNGOScreen(Screen):
