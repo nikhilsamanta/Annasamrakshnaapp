@@ -20,7 +20,7 @@ import time
 from kivy.clock import mainthread
 from kivymd.uix.list import ThreeLineIconListItem, MDList, IconLeftWidget
 
-cred = credentials.Certificate(r"")#add path to your sdk file
+cred = credentials.Certificate(r"") #add path to your sdk file
 firebase_admin.initialize_app(cred, {
     'databaseURL': '' #copy the firebase database url
 })
