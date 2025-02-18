@@ -11,7 +11,7 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.core.window import Window
 import webbrowser
 import firebase_admin
-from firebase_admin import credentials, db
+from firebase_admin import credentials, db 
 from functools import partial
 from kivymd.toast import toast
 import bcrypt
