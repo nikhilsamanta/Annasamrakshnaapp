@@ -711,11 +711,7 @@ class HomeDonorScreen(Screen):
         self.manager.current = 'login'
     
 
-class HomeNGOScreen(Screen):
-    def navigate_to_profile(self):
-        self.manager.current = 'profile'
-        profile_screen = self.manager.get_screen('profile')
-        profile_screen.load_user_details()  # Load user details when navigating
+
 
 
 
