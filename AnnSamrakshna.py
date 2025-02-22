@@ -22,9 +22,9 @@ from kivymd.uix.list import IconLeftWidget
 from kivy.app import App
 
 # Initialize Firebase
-cred = credentials.Certificate(r"")  # Add path to your SDK file
+cred = credentials.Certificate(r"C:\Users\Nikhil Samanta\OneDrive\Desktop\Annasamrakshna\Annasamrakshna\annsamrakshna-firebase-adminsdk-fbsvc-7440003fe8.json")#add path to your sdk file
 firebase_admin.initialize_app(cred, {
-    'databaseURL': ''  # Copy the Firebase database URL
+    'databaseURL': 'https://annsamrakshna-default-rtdb.firebaseio.com/' #copy the firebase database url
 })
 
 Window.size = (360, 640)
@@ -907,38 +907,7 @@ class ViewNGOsNgoScreen(Screen):
         else:
             self.ids.ngo_list.add_widget(ThreeLineIconListItem(text="No NGOs registered."))
 
-class ProfileScreen(Screen):
-    def on_enter(self):
-        """Fetch and display user details when the screen is opened."""
-        self.load_user_details()
 
-    def load_user_details(self):
-        """Retrieve and display user details from Firebase."""
-        app = App.get_running_app()  # Access the app instance
-        username = app.root.ids.screen_manager.get_screen('login').ids.username.text
-        if not username:
-            toast("User not logged in")
-            return
-
-        if app.is_donor:  # Check if the user is a donor or NGO
-            ref = db.reference("donors")
-        else:
-            ref = db.reference("ngos")
-
-        user_data = ref.child(username).get()
-
-        if user_data:
-            self.update_profile(user_data)
-        else:
-            toast("User data not found")
-
-    def update_profile(self, user_data):
-        """Update UI elements with user details."""
-        self.ids.full_name.text = f"Full Name: {user_data.get('full_name', 'N/A')}"
-        self.ids.username.text = f"Username: {user_data.get('user_name', 'N/A')}"
-        self.ids.email.text = f"Email: {user_data.get('email', 'N/A')}"
-        self.ids.phone.text = f"Phone: {user_data.get('phone', 'N/A')}"
-        self.ids.address.text = f"Address: {user_data.get('address', 'N/A')}"
 
 class AnnSamrakshnaApp(MDApp):
     def build(self):
