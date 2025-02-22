@@ -3,7 +3,7 @@ from kivy.uix.screenmanager import Screen, ScreenManager
 from kivymd.app import MDApp
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.list import OneLineListItem
+from kivymd.uix.list import OneLineListItem, ThreeLineIconListItem
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.label import MDLabel
 from kivymd.uix.navigationdrawer import MDNavigationDrawer, MDNavigationLayout, MDNavigationDrawerMenu, MDNavigationDrawerHeader, MDNavigationDrawerItem
@@ -11,18 +11,20 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.core.window import Window
 import webbrowser
 import firebase_admin
-from firebase_admin import credentials, db 
+from firebase_admin import credentials, db
 from functools import partial
 from kivymd.toast import toast
 import bcrypt
 from kivy.clock import Clock
 import time
 from kivy.clock import mainthread
-from kivymd.uix.list import ThreeLineIconListItem, MDList, IconLeftWidget
+from kivymd.uix.list import IconLeftWidget
+from kivy.app import App
 
-cred = credentials.Certificate(r"") #add path to your sdk file
+# Initialize Firebase
+cred = credentials.Certificate(r"")  # Add path to your SDK file
 firebase_admin.initialize_app(cred, {
-    'databaseURL': '' #copy the firebase database url
+    'databaseURL': ''  # Copy the Firebase database URL
 })
 
 Window.size = (360, 640)
@@ -47,8 +49,7 @@ MDNavigationLayout:
         ViewDonationsNgoScreen:
         ViewDetailDonationNgoScreen:
         ViewNGOsNgoScreen:
-   
-
+        ProfileScreen:  
 
 <LoginScreen>:
     name: 'login'
@@ -311,6 +312,7 @@ MDNavigationLayout:
                 text: "Profile"
                 icon: "face-man-profile"
                 md_bg_color: 235/255, 220/255, 199/255, 1
+                on_release: root.navigate_to_profile(); nav_drawer_donor.set_state("close")
             
             MDNavigationDrawerItem:
                 text: "Donate Food"
@@ -520,6 +522,7 @@ MDNavigationLayout:
                 text: "Profile"
                 icon: "face-man-profile"
                 md_bg_color: 235/255, 220/255, 199/255, 1
+                on_release: app.change_screen('profile'); nav_drawer_ngo.set_state("close")
             
             
             MDNavigationDrawerItem:
@@ -629,6 +632,59 @@ MDNavigationLayout:
                 MDList:
                     id: ngo_list 
                          
+<ProfileScreen>:
+    name: 'profile'
+    BoxLayout:
+        orientation: 'vertical'
+        md_bg_color: 235/255, 220/255, 199/255, 1
+
+        MDTopAppBar:
+            title: "Profile"
+            md_bg_color: 205/255, 133/255, 63/255
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_donor' if app.is_donor else 'home_ngo')]]
+
+        ScrollView:
+            MDBoxLayout:
+                orientation: 'vertical'
+                adaptive_height: True
+                padding: dp(20)
+                spacing: dp(20)
+
+                MDCard:
+                    orientation: 'vertical'
+                    padding: dp(20)
+                    size_hint: None, None
+                    size: dp(320), dp(400)
+                    md_bg_color: 1, 1, 1, 1
+                    elevation: 4
+                    radius: dp(12)
+
+                    MDLabel:
+                        id: full_name
+                        text: "Full Name: "
+                        font_style: "H5"
+                        theme_text_color: "Primary"
+                        bold: True
+
+                    MDLabel:
+                        id: username
+                        text: "Username: "
+                        theme_text_color: "Secondary"
+
+                    MDLabel:
+                        id: email
+                        text: "Email: "
+                        theme_text_color: "Secondary"
+
+                    MDLabel:
+                        id: phone
+                        text: "Phone: "
+                        theme_text_color: "Secondary"
+
+                    MDLabel:
+                        id: address
+                        text: "Address: "
+                        theme_text_color: "Secondary"
 """ 
 
 class LoginScreen(Screen):
@@ -644,13 +700,24 @@ class RegisterNGOScreen(Screen):
     pass
 
 class HomeDonorScreen(Screen):
+    def navigate_to_profile(self):
+        self.manager.current = 'profile'
+        profile_screen = self.manager.get_screen('profile')
+        profile_screen.load_user_details()  # Load user details when navigating
+
     def logout(self):
         self.ids.nav_drawer_donor.set_state("close")
-
         print("User logged out")
-        
-      
         self.manager.current = 'login'
+    
+
+class HomeNGOScreen(Screen):
+    def navigate_to_profile(self):
+        self.manager.current = 'profile'
+        profile_screen = self.manager.get_screen('profile')
+        profile_screen.load_user_details()  # Load user details when navigating
+
+
 
 class DonateFoodScreen(Screen):
     def submit_donation(self):
@@ -664,10 +731,7 @@ class DonateFoodScreen(Screen):
             print("All fields are required!")
             return
 
-       
         donation_key = f"donation_{int(time.time())}"
-
-
         donation_data = {
             "donor_name": donor_name,
             "food_type": food_type,
@@ -676,12 +740,9 @@ class DonateFoodScreen(Screen):
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S") 
         }
 
- 
         db.reference("donations").child(donation_key).set(donation_data)
-
         print("Donation submitted successfully!")
         toast("Donation Submitted successfully!!")
-     
         Clock.schedule_once(self.clear_fields, 0.5)
 
     def clear_fields(self, dt):
@@ -690,18 +751,13 @@ class DonateFoodScreen(Screen):
         self.ids.quantity.text = ""
         self.ids.location.text = ""
 
-
 class ViewDonationsScreen(Screen):
     def on_enter(self):
-        """Fetch and display only unclaimed donations when the screen is opened."""
         self.load_donations()
 
     def load_donations(self):
-        """Retrieve and display only unclaimed donations from Firebase."""
         donation_ref = db.reference("donations")
         donations = donation_ref.get()
-
-       
         self.ids.donation_list.clear_widgets()
 
         if donations:
@@ -712,7 +768,6 @@ class ViewDonationsScreen(Screen):
                     self.ids.donation_list.add_widget(OneLineListItem(text=donation_text))
                     has_unclaimed = True  
             
-       
             if not has_unclaimed:
                 self.ids.donation_list.add_widget(OneLineListItem(text="No unclaimed donations available."))
         else:
@@ -720,24 +775,19 @@ class ViewDonationsScreen(Screen):
 
 class ViewNGOsScreen(Screen):
     def on_pre_enter(self):
-        """Clear and reload NGOs every time the screen is entered."""
         self.fetch_ngos()
 
     def fetch_ngos(self):
-        """Fetch NGOs from Firebase and update the list."""
-        ref = db.reference('ngos')  # Adjust if needed
+        ref = db.reference('ngos')  
         ngos = ref.get()
-
         if ngos:
             self.update_list(ngos)
         else:
-            self.update_list({})  # If no data, show an empty list
+            self.update_list({})  
 
     @mainthread
     def update_list(self, ngos):
-        """Update the UI with fetched NGOs."""
-        self.ids.ngo_list.clear_widgets()  # Clear old list
-
+        self.ids.ngo_list.clear_widgets()  
         if ngos:
             for ngo_id, ngo_data in ngos.items():
                 ngo_name = ngo_data.get("ngo_name", "Unknown NGO")
@@ -746,58 +796,43 @@ class ViewNGOsScreen(Screen):
                 phone = ngo_data.get("phone", "No Contact")
                 email = ngo_data.get("email", "No Email")
 
-                # Create list item with tap action
                 item = ThreeLineIconListItem(
                     text=f"{ngo_name} ({ngo_type})",
                     secondary_text=f"Address: {address}",
                     tertiary_text=f"Phone: {phone} \nEmail: {email}",
                     on_release=lambda x, data=ngo_data: self.view_ngo_details(data)
                 )
-
-                # Add NGO icon
                 item.add_widget(IconLeftWidget(icon="charity"))
-
                 self.ids.ngo_list.add_widget(item)
         else:
             self.ids.ngo_list.add_widget(ThreeLineIconListItem(text="No NGOs registered."))
 
     def view_ngo_details(self, ngo_data):
-        """Navigate to ViewDetailNgoScreen and set NGO details."""
         detail_screen = self.manager.get_screen("view_detail_ngo")
         detail_screen.update_details(ngo_data)
         self.manager.current = "view_detail_ngo"
 
-
 class ViewDetailNgoScreen(Screen):
     def update_details(self, ngo_data):
-        """Update UI elements with NGO details."""
         self.ids.ngo_name.text = f"NGO: {ngo_data.get('ngo_name', 'Unknown')}"
         self.ids.ngo_type.text = f"Type: {ngo_data.get('ngo_type', 'N/A')}"
         self.ids.ngo_address.text = f"Address: {ngo_data.get('address', 'N/A')}"
         self.ids.ngo_phone.text = f"Phone: {ngo_data.get('phone', 'N/A')}"
         self.ids.ngo_email.text = f"Email: {ngo_data.get('email', 'N/A')}"
 
-
 class HomeNGOScreen(Screen):
     def logout(self):
         self.ids.nav_drawer_ngo.set_state("close")
-        
         print("User logged out")
-        
-       
         self.manager.current = 'login'
 
 class ViewDonationsNgoScreen(Screen):
     def on_enter(self):
-        """Fetch and display donations when the screen is opened."""
         self.load_donations()
 
     def load_donations(self):
-        """Retrieve and display only unclaimed donations from Firebase."""
         donation_ref = db.reference("donations")
         donations = donation_ref.get()
-
-
         self.ids.donation_list.clear_widgets()
 
         if donations:
@@ -810,14 +845,12 @@ class ViewDonationsNgoScreen(Screen):
             self.ids.donation_list.add_widget(OneLineListItem(text="No available donations."))
 
     def view_details(self, donation_id):
-        """Navigate to the donation detail screen and pass the donation ID."""
         detail_screen = self.manager.get_screen('donation_detail')
         detail_screen.load_donation_details(donation_id)
         self.manager.current = 'donation_detail'
 
 class ViewDetailDonationNgoScreen(Screen):
     def load_donation_details(self, donation_id):
-        """Fetch detailed donation information from Firebase."""
         donation_ref = db.reference(f"donations/{donation_id}")
         donation = donation_ref.get()
 
@@ -826,40 +859,28 @@ class ViewDetailDonationNgoScreen(Screen):
             self.ids.food_type.text = f"Food Type: {donation['food_type']}"
             self.ids.quantity.text = f"Quantity: {donation['quantity']}"
             self.ids.location.text = f"Location: {donation['location']}"
-
-           
             self.ids.claim_donation_btn.on_release = lambda: self.claim_donation(donation_id)
 
     def open_location_in_maps(self):
-        """Open the pickup location in Google Maps."""
         location = self.ids.location.text.replace("Location: ", "").strip()
         url = f"https://www.google.com/maps/search/?api=1&query={location.replace(' ', '+')}"
         webbrowser.open(url)
 
     def claim_donation(self, donation_id):
-        """Mark the donation as claimed in Firebase and refresh the list."""
         donation_ref = db.reference(f"donations/{donation_id}")
         donation_ref.update({"status": "claimed"}) 
-
-   
         toast(f"Donation {donation_id} claimed!")
         print(f"Donation {donation_id} claimed!")
-
         self.manager.current = 'view_donations_ngo'
-
-
         self.manager.get_screen('view_donations_ngo').load_donations()
 
 class ViewNGOsNgoScreen(Screen):
     def on_pre_enter(self):
-        """Clear and reload NGOs every time the screen is entered."""
         self.fetch_ngos()
 
     def fetch_ngos(self):
-        """Fetch NGOs from Firebase and update the list."""
         ref = db.reference('ngos')  
         ngos = ref.get()
-
         if ngos:
             self.update_list(ngos)
         else:
@@ -867,9 +888,7 @@ class ViewNGOsNgoScreen(Screen):
 
     @mainthread
     def update_list(self, ngos):
-        """Update the UI with fetched NGOs."""
         self.ids.ngo_list.clear_widgets()  
-
         if ngos:
             for ngo_id, ngo_data in ngos.items():
                 ngo_name = ngo_data.get("ngo_name", "Unknown NGO")
@@ -878,19 +897,48 @@ class ViewNGOsNgoScreen(Screen):
                 phone = ngo_data.get("phone", "No Contact")
                 email = ngo_data.get("email", "No Email")
 
-                
                 item = ThreeLineIconListItem(
                     text=f"{ngo_name} ({ngo_type})",
                     secondary_text=f"Address: {address}",
                     tertiary_text=f"Phone: {phone}\n|Email: {email}",
                 )
-
-               
                 item.add_widget(IconLeftWidget(icon="charity"))  
-
                 self.ids.ngo_list.add_widget(item)
         else:
             self.ids.ngo_list.add_widget(ThreeLineIconListItem(text="No NGOs registered."))
+
+class ProfileScreen(Screen):
+    def on_enter(self):
+        """Fetch and display user details when the screen is opened."""
+        self.load_user_details()
+
+    def load_user_details(self):
+        """Retrieve and display user details from Firebase."""
+        app = App.get_running_app()  # Access the app instance
+        username = app.root.ids.screen_manager.get_screen('login').ids.username.text
+        if not username:
+            toast("User not logged in")
+            return
+
+        if app.is_donor:  # Check if the user is a donor or NGO
+            ref = db.reference("donors")
+        else:
+            ref = db.reference("ngos")
+
+        user_data = ref.child(username).get()
+
+        if user_data:
+            self.update_profile(user_data)
+        else:
+            toast("User data not found")
+
+    def update_profile(self, user_data):
+        """Update UI elements with user details."""
+        self.ids.full_name.text = f"Full Name: {user_data.get('full_name', 'N/A')}"
+        self.ids.username.text = f"Username: {user_data.get('user_name', 'N/A')}"
+        self.ids.email.text = f"Email: {user_data.get('email', 'N/A')}"
+        self.ids.phone.text = f"Phone: {user_data.get('phone', 'N/A')}"
+        self.ids.address.text = f"Address: {user_data.get('address', 'N/A')}"
 
 class AnnSamrakshnaApp(MDApp):
     def build(self):
@@ -913,7 +961,6 @@ class AnnSamrakshnaApp(MDApp):
             toast("Please enter username and password")
             return
 
- 
         donor_ref = db.reference("donors")
         donor_data = donor_ref.child(username).get()
 
@@ -933,8 +980,6 @@ class AnnSamrakshnaApp(MDApp):
             return
 
         toast("Invalid credentials")
-    
-
 
     def register_donor(self):
         full_name = self.root.ids.screen_manager.get_screen('register_donor').ids.full_name.text
@@ -950,12 +995,10 @@ class AnnSamrakshnaApp(MDApp):
 
         donor_ref = db.reference("donors")
 
-   
         if donor_ref.child(user_name).get():
             toast("Username already exists")
             return
 
- 
         existing_donors = donor_ref.get()
         if existing_donors:
             for donor_info in existing_donors.values():
@@ -966,22 +1009,20 @@ class AnnSamrakshnaApp(MDApp):
                     toast("Phone number is already registered")
                     return
 
-
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
         donor_data = {
-        "full_name": full_name,
-        "user_name": user_name,
-        "email": email,
-        "phone": phone,
-        "address": address,
-        "password": hashed_password 
-    }
+            "full_name": full_name,
+            "user_name": user_name,
+            "email": email,
+            "phone": phone,
+            "address": address,
+            "password": hashed_password 
+        }
 
         donor_ref.child(user_name).set(donor_data)
         toast("Registration successful!")
         self.change_screen('login')
-
 
     def register_ngo(self):
         ngo_name = self.root.ids.screen_manager.get_screen('register_ngo').ids.ngo_name.text
@@ -997,7 +1038,6 @@ class AnnSamrakshnaApp(MDApp):
             return
 
         ngo_ref = db.reference("ngos")
-
 
         if ngo_ref.child(registration_number).get():
             toast("Registration number already exists")
@@ -1016,21 +1056,18 @@ class AnnSamrakshnaApp(MDApp):
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
         ngo_data = {
-        "ngo_name": ngo_name,
-        "registration_number": registration_number,
-        "email": email,
-        "phone": phone,
-        "address": address,
-        "ngo_type": ngo_type,
-        "password": hashed_password  
-    }
+            "ngo_name": ngo_name,
+            "registration_number": registration_number,
+            "email": email,
+            "phone": phone,
+            "address": address,
+            "ngo_type": ngo_type,
+            "password": hashed_password  
+        }
 
         ngo_ref.child(registration_number).set(ngo_data)
         toast("NGO registered successfully!")
         self.change_screen('login')
-        
-
-
 
 if __name__ == '__main__':
     AnnSamrakshnaApp().run()
