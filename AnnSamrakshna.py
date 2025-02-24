@@ -12,6 +12,7 @@ from kivy.core.window import Window
 import webbrowser
 import firebase_admin
 from firebase_admin import credentials, db
+from firebase_admin import credentials, storage
 from functools import partial
 from kivymd.toast import toast
 import bcrypt
@@ -24,8 +25,12 @@ from kivy.app import App
 # Initialize Firebase
 cred = credentials.Certificate(r"")#add path to your sdk file
 firebase_admin.initialize_app(cred, {
-    'databaseURL': '' #copy the firebase database url
+    'databaseURL': , #copy the firebase database url
+    'storageBucket': #copy the storagebucket url
 })
+
+
+
 
 Window.size = (360, 640)
 
@@ -49,7 +54,8 @@ MDNavigationLayout:
         ViewDonationsNgoScreen:
         ViewDetailDonationNgoScreen:
         ViewNGOsNgoScreen:
-        ProfileScreen:  
+        ProfileScreen: 
+        GalleryScreen: 
 
 <LoginScreen>:
     name: 'login'
@@ -61,7 +67,7 @@ MDNavigationLayout:
             spacing: "10dp"
             md_bg_color: 235/255, 220/255, 199/255, 1
             Image:
-                source: 'D:/Annsamrakshna/assets/logo/Annsamrakshna.png'
+                source: 'C:/Users/Nikhil Samanta/OneDrive/Desktop/Annasamrakshna/Annasamrakshna/assets/logo/Annsamrakshna.png'
                 size_hint: (0.8, 0.7)
                 pos_hint: {"center_x": 0.5}
                 keep_ratio: True
@@ -269,7 +275,7 @@ MDNavigationLayout:
             padding: "20dp"
             md_bg_color: 235/255, 220/255, 199/255, 1
             Image:
-                source: 'D:/Annsamrakshna/assets/logo/Annsamrakshna.png'
+                source: 'C:/Users/Nikhil Samanta/OneDrive/Desktop/Annasamrakshna/Annasamrakshna/assets/logo/Annsamrakshna.png'
                 size_hint: (0.5, 0.5)
                 pos_hint: {"center_x": 0.5}
                 keep_ratio: True
@@ -482,7 +488,7 @@ MDNavigationLayout:
             padding: "20dp"
             md_bg_color: 235/255, 220/255, 199/255, 1
             Image:
-                source: 'D:/Annsamrakshna/assets/logo/Annsamrakshna.png'
+                source: 'C:/Users/Nikhil Samanta/OneDrive/Desktop/Annasamrakshna/Annasamrakshna/assets/logo/Annsamrakshna.png'
                 size_hint: (0.5, 0.5)
                 pos_hint: {"center_x": 0.5}
                 keep_ratio: True
@@ -536,6 +542,13 @@ MDNavigationLayout:
                 icon: "account-group"
                 md_bg_color: 235/255, 220/255, 199/255, 1
                 on_release: app.change_screen('view_ngos_ngo'); nav_drawer_ngo.set_state("close")
+
+            MDNavigationDrawerItem:
+                text: "Gallery"
+                icon: "image"
+                md_bg_color: 235/255, 220/255, 199/255, 1
+                on_release: app.change_screen('gallery'); nav_drawer_ngo.set_state("close")
+            
             MDNavigationDrawerItem:
                 text: "Settings"
                 icon: "wrench"
@@ -685,6 +698,40 @@ MDNavigationLayout:
                         id: address
                         text: "Address: "
                         theme_text_color: "Secondary"
+
+<GalleryScreen>:
+    name: 'gallery'
+    BoxLayout:
+        orientation: 'vertical'
+        
+        MDTopAppBar:
+            title: "Gallery"
+            md_bg_color: 205/255, 133/255, 63/255,
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_ngo')]]
+        
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: "20dp"
+            spacing: "10dp"
+            md_bg_color: 235/255, 220/255, 199/255, 1
+
+            ScrollView:
+                MDGridLayout:
+                    id: gallery_grid
+                    cols: 2
+                    spacing: "10dp"
+                    padding: "10dp"
+                    adaptive_height: True
+
+            MDRaisedButton:
+                text: "Upload Image"
+                size_hint: (1, None)
+                height: "50dp"
+                md_bg_color: 205/255, 133/255, 63/255,
+                on_release: root.open_file_chooser()
+                        
+
+
 """ 
 
 class LoginScreen(Screen):
@@ -716,7 +763,11 @@ class HomeNGOScreen(Screen):
         self.manager.current = 'profile'
         profile_screen = self.manager.get_screen('profile')
         profile_screen.load_user_details()  # Load user details when navigating
-
+        
+    def logout(self):
+        self.ids.nav_drawer_ngo.set_state("close")
+        print("User logged out")
+        self.manager.current = 'login'    
 
 
 class DonateFoodScreen(Screen):
@@ -820,11 +871,8 @@ class ViewDetailNgoScreen(Screen):
         self.ids.ngo_phone.text = f"Phone: {ngo_data.get('phone', 'N/A')}"
         self.ids.ngo_email.text = f"Email: {ngo_data.get('email', 'N/A')}"
 
-class HomeNGOScreen(Screen):
-    def logout(self):
-        self.ids.nav_drawer_ngo.set_state("close")
-        print("User logged out")
-        self.manager.current = 'login'
+
+    
 
 class ViewDonationsNgoScreen(Screen):
     def on_enter(self):
@@ -939,6 +987,66 @@ class ProfileScreen(Screen):
         self.ids.email.text = f"Email: {user_data.get('email', 'N/A')}"
         self.ids.phone.text = f"Phone: {user_data.get('phone', 'N/A')}"
         self.ids.address.text = f"Address: {user_data.get('address', 'N/A')}"
+
+
+class GalleryScreen(Screen):
+    def open_file_chooser(self):
+        """Open a file chooser to select an image."""
+        from tkinter import Tk, filedialog
+        root = Tk()
+        root.withdraw()  # Hide the root window
+        file_path = filedialog.askopenfilename(
+            title="Select an image",
+            filetypes=[("Image Files", "*.png *.jpg *.jpeg")]
+        )
+        if file_path:
+            self.upload_image(file_path)
+
+    def upload_image(self, file_path):
+        """Upload the selected image to Firebase Storage."""
+        from firebase_admin import storage
+        import uuid
+
+        # Generate a unique filename
+        file_name = f"donation_{uuid.uuid4()}.jpg"
+        bucket = storage.bucket()
+        blob = bucket.blob(file_name)
+
+        # Upload the file
+        blob.upload_from_filename(file_path)
+        blob.make_public()
+
+        # Save the image URL to Firebase Realtime Database
+        image_url = blob.public_url
+        db.reference("gallery").push().set({
+            "image_url": image_url,
+            "uploaded_by": "NGO",  # Replace with the NGO's name or ID
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        toast("Image uploaded successfully!")
+        self.load_gallery()
+
+    def load_gallery(self):
+        """Load and display images from Firebase."""
+        gallery_ref = db.reference("gallery")
+        gallery_data = gallery_ref.get()
+        self.ids.gallery_grid.clear_widgets()
+
+        if gallery_data:
+            print("Gallery data found:", gallery_data)  # Debugging
+            for key, image in gallery_data.items():
+                print("Loading image:", image["image_url"])  # Debugging
+                from kivy.uix.image import AsyncImage
+                image_widget = AsyncImage(source=image["image_url"], size_hint=(1, None), height="200dp")
+                self.ids.gallery_grid.add_widget(image_widget)
+        else:
+            print("No gallery data found")  # Debugging
+            self.ids.gallery_grid.add_widget(MDLabel(text="No images available."))
+
+    def on_enter(self):
+        """Load the gallery when the screen is entered."""
+        self.load_gallery()       
 
 class AnnSamrakshnaApp(MDApp):
     def build(self):
@@ -1068,6 +1176,10 @@ class AnnSamrakshnaApp(MDApp):
         ngo_ref.child(registration_number).set(ngo_data)
         toast("NGO registered successfully!")
         self.change_screen('login')
+
+
+
+
 
 if __name__ == '__main__':
     AnnSamrakshnaApp().run()
