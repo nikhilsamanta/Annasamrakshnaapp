@@ -338,7 +338,7 @@ MDNavigationLayout:
                 md_bg_color: 235/255, 220/255, 199/255, 1
                 on_release: app.change_screen('view_ngos'); nav_drawer_donor.set_state("close")
 
-             MDNavigationDrawerItem:
+            MDNavigationDrawerItem:
                 text: "Gallery"
                 icon: "image"
                 md_bg_color: 235/255, 220/255, 199/255, 1
