@@ -21,7 +21,7 @@ import time
 from kivy.clock import mainthread
 from kivymd.uix.list import IconLeftWidget
 from kivy.app import App
-
+ 
 # Initialize Firebase
 cred = credentials.Certificate(r"")#add path to your sdk file
 firebase_admin.initialize_app(cred, {
