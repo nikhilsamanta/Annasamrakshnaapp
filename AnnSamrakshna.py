@@ -25,9 +25,10 @@ from kivy.app import App
 # Initialize Firebase
 cred = credentials.Certificate(r"")#add path to your sdk file
 firebase_admin.initialize_app(cred, {
-    'databaseURL': , #copy the firebase database url
-    'storageBucket': #copy the storagebucket url
+    'databaseURL': '', #copy the firebase database url
+    'storageBucket': '' 
 })
+
 
 
 
@@ -56,6 +57,28 @@ MDNavigationLayout:
         ViewNGOsNgoScreen:
         ProfileScreen: 
         GalleryScreen: 
+        NotificationsScreen:
+
+<RedDot@MDBoxLayout>:
+    size_hint: None, None
+    size: "12dp", "12dp"
+    pos_hint: {"center_x": 0.8, "center_y": 0.8}  # Adjust position as needed
+    canvas.before:
+        Color:
+            rgba: 1, 0, 0, 1  # Red color
+        Ellipse:
+            size: self.size
+            pos: self.pos
+
+<NotificationsButton@MDFloatingActionButton>:
+    icon: "bell"
+    size_hint: None, None
+    size: "56dp", "56dp"
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    RedDot:
+        id: red_dot
+        opacity: 0  # Initially hidden        
+
 
 <LoginScreen>:
     name: 'login'
@@ -505,7 +528,6 @@ MDNavigationLayout:
                 padding: [20,80]
                 spacing: dp(50)
                 
-            
                 MDRaisedButton:
                     text: "View Donations"
                     pos_hint: {"center_x": 0.5}
@@ -514,13 +536,21 @@ MDNavigationLayout:
                     on_release: app.change_screen('view_donations_ngo');nav_drawer_ngo.set_state("close")
 
                 MDRaisedButton:
+                    text: "View Notifications"
+                    pos_hint: {"center_x": 0.5}
+                    size_hint: (0.8, 0) 
+                    md_bg_color: 205/255, 133/255, 63/255,
+                    on_release: app.change_screen('notifications'); nav_drawer_ngo.set_state("close")
+
+                    
+                    
+                MDRaisedButton:
                     text: "View NGOs"
                     pos_hint: {"center_x": 0.5}
                     size_hint: (0.8, 0) 
                     md_bg_color: 205/255, 133/255, 63/255,
-                    on_release: app.change_screen('view_ngos_ngo'); nav_drawer_ngo.set_state("close")
+                    on_release: app.change_screen('view_ngos_ngo'); nav_drawer_ngo.set_state("close")    
                     
-
     MDNavigationDrawer:
         id: nav_drawer_ngo
         md_bg_color: 235/255, 220/255, 199/255, 1
@@ -536,7 +566,6 @@ MDNavigationLayout:
                 icon: "face-man-profile"
                 md_bg_color: 235/255, 220/255, 199/255, 1
                 on_release: app.change_screen('profile'); nav_drawer_ngo.set_state("close")
-            
             
             MDNavigationDrawerItem:
                 text: "View Donations"
@@ -560,12 +589,35 @@ MDNavigationLayout:
                 text: "Settings"
                 icon: "wrench"
                 md_bg_color: 235/255, 220/255, 199/255, 1
+
+            MDNavigationDrawerItem:
+                text: "Notification"
+                md_bg_color: 235/255, 220/255, 199/255, 1
+                on_release: app.change_screen('notifications'); nav_drawer_ngo.set_state("close")
+                icon: "bell"
+                RedDot:
+                    id: red_dot
+                    opacity: 0  # Initially hidden
+    
             
             MDNavigationDrawerItem:
                 text: "Log-Out"
                 icon: "logout"
                 md_bg_color: 235/255, 220/255, 199/255, 1
                 on_release: root.logout();
+
+<NotificationsScreen>:
+    name: 'notifications'
+    BoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Notifications"
+            md_bg_color: 205/255, 133/255, 63/255,
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_ngo')]]
+        
+        ScrollView:
+            MDList:
+                id: notification_list
 
 
 <ViewDonationsNgoScreen>:
@@ -763,9 +815,37 @@ class HomeDonorScreen(Screen):
         self.ids.nav_drawer_donor.set_state("close")
         print("User logged out")
         self.manager.current = 'login'
-    
+
+
 
 class HomeNGOScreen(Screen):
+    def on_enter(self):
+        """Check for unread notifications when the screen is entered."""
+        self.check_unread_notifications()
+
+    def check_unread_notifications(self):
+        """Check if there are unread notifications for the current NGO."""
+        notifications_ref = db.reference("notifications")
+        notifications = notifications_ref.get()
+
+        if notifications:
+            current_ngo_id = self.get_current_ngo_id()
+            unread_notifications = [
+                n for n in notifications.values()
+                if current_ngo_id not in n.get("read_by", [])
+            ]
+            if unread_notifications:
+                self.ids.red_dot.opacity = 1  # Show red dot
+            else:
+                self.ids.red_dot.opacity = 0  # Hide red dot
+        else:
+            self.ids.red_dot.opacity = 0  # Hide red dot
+
+    def get_current_ngo_id(self):
+        """Get the current NGO's ID from the app."""
+        app = App.get_running_app()
+        return app.current_user_id  # Assuming you store the current NGO's ID in the app
+
     def navigate_to_profile(self):
         self.manager.current = 'profile'
         profile_screen = self.manager.get_screen('profile')
@@ -786,7 +866,6 @@ class DonateFoodScreen(Screen):
 
         if not donor_name or not food_type or not quantity or not location:
             toast("All fields are required")
-            print("All fields are required!")
             return
 
         donation_key = f"donation_{int(time.time())}"
@@ -795,15 +874,29 @@ class DonateFoodScreen(Screen):
             "food_type": food_type,
             "quantity": quantity,
             "location": location,
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S") 
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "status": "unclaimed"
         }
 
         db.reference("donations").child(donation_key).set(donation_data)
-        print("Donation submitted successfully!")
         toast("Donation Submitted successfully!!")
-        Clock.schedule_once(self.clear_fields, 0.5)
+        self.clear_fields()
 
-    def clear_fields(self, dt):
+        # Create a notification for NGOs
+        self.create_notification(donation_key, donation_data)
+
+    def create_notification(self, donation_key, donation_data):
+        """Create a notification entry in Firebase."""
+        notification_key = f"notification_{int(time.time())}"
+        notification_data = {
+            "message": f"New Donation: {donation_data['food_type']} ({donation_data['quantity']}) from {donation_data['donor_name']}",
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "donation_id": donation_key,  # Link to the donation
+            "read_by": []  # Initialize as an empty list
+        }
+        db.reference("notifications").child(notification_key).set(notification_data)
+
+    def clear_fields(self):
         self.ids.donor_name.text = ""
         self.ids.food_type.text = ""
         self.ids.quantity.text = ""
@@ -906,6 +999,7 @@ class ViewDonationsNgoScreen(Screen):
 
 class ViewDetailDonationNgoScreen(Screen):
     def load_donation_details(self, donation_id):
+        """Load donation details from Firebase."""
         donation_ref = db.reference(f"donations/{donation_id}")
         donation = donation_ref.get()
 
@@ -915,19 +1009,42 @@ class ViewDetailDonationNgoScreen(Screen):
             self.ids.quantity.text = f"Quantity: {donation['quantity']}"
             self.ids.location.text = f"Location: {donation['location']}"
             self.ids.claim_donation_btn.on_release = lambda: self.claim_donation(donation_id)
+        else:
+            toast("Donation not found")
 
     def open_location_in_maps(self):
+        """Open the donation location in Google Maps."""
         location = self.ids.location.text.replace("Location: ", "").strip()
         url = f"https://www.google.com/maps/search/?api=1&query={location.replace(' ', '+')}"
         webbrowser.open(url)
 
     def claim_donation(self, donation_id):
+        """Mark the donation as claimed and clear related notifications."""
+        # Mark the donation as claimed
         donation_ref = db.reference(f"donations/{donation_id}")
-        donation_ref.update({"status": "claimed"}) 
-        toast(f"Donation {donation_id} claimed!")
-        print(f"Donation {donation_id} claimed!")
+        donation_ref.update({"status": "claimed"})
+        toast("Donation claimed successfully!")
+
+        # Clear notifications linked to this donation
+        self.clear_notifications_for_donation(donation_id)
+
+        # Navigate back to the donations screen
         self.manager.current = 'view_donations_ngo'
         self.manager.get_screen('view_donations_ngo').load_donations()
+
+    def clear_notifications_for_donation(self, donation_id):
+        """Delete all notifications linked to the given donation ID."""
+        notifications_ref = db.reference("notifications")
+        notifications = notifications_ref.get()
+
+        if notifications:
+            for notification_id, notification_data in notifications.items():
+                if notification_data.get("donation_id") == donation_id:
+                    notifications_ref.child(notification_id).delete()
+
+        # Update the red dot in the HomeNGOScreen
+        home_screen = self.manager.get_screen('home_ngo')
+        home_screen.check_unread_notifications()
 
 class ViewNGOsNgoScreen(Screen):
     def on_pre_enter(self):
@@ -995,6 +1112,72 @@ class ProfileScreen(Screen):
         self.ids.phone.text = f"Phone: {user_data.get('phone', 'N/A')}"
         self.ids.address.text = f"Address: {user_data.get('address', 'N/A')}"
 
+class NotificationsScreen(Screen):
+    def on_enter(self):
+        """Fetch notifications when the screen is entered."""
+        self.fetch_notifications()
+
+    def fetch_notifications(self):
+        """Fetch notifications from Firebase."""
+        notifications_ref = db.reference("notifications")
+        notifications = notifications_ref.get()
+
+        if notifications:
+            self.update_notifications(notifications)
+        else:
+            self.update_notifications({})  # No notifications
+
+    @mainthread
+    def update_notifications(self, notifications):
+        """Update the UI with the fetched notifications."""
+        print("Updating notifications...")
+        print("Available IDs:", self.ids)
+
+        if 'notification_list' in self.ids:
+            self.ids.notification_list.clear_widgets()  # Clear existing notifications
+        else:
+            print("Error: notification_list ID not found!")
+            return
+
+        if notifications:
+            for notification_id, notification_data in notifications.items():
+                # Check if the current NGO has read the notification
+                current_ngo_id = self.get_current_ngo_id()
+                if current_ngo_id not in notification_data.get("read_by", []):
+                    notification_text = notification_data.get("message", "New Notification")
+                    timestamp = notification_data.get("timestamp", "")
+
+                    # Add the notification to the list
+                    item = OneLineListItem(
+                        text=f"{notification_text} - {timestamp}",
+                        on_release=lambda x, nid=notification_id, did=notification_data.get("donation_id"): self.open_donation(nid, did)
+                    )
+                    self.ids.notification_list.add_widget(item)
+        else:
+            self.ids.notification_list.add_widget(OneLineListItem(text="No new notifications."))
+
+    def open_donation(self, notification_id, donation_id):
+        """Open the donation and mark the notification as read for the current NGO."""
+        # Get the current NGO's ID
+        current_ngo_id = self.get_current_ngo_id()
+
+        # Add the NGO's ID to the "read_by" list
+        notification_ref = db.reference(f"notifications/{notification_id}")
+        notification_ref.child("read_by").push().set(current_ngo_id)
+
+        # Open the donation details
+        detail_screen = self.manager.get_screen('donation_detail')
+        detail_screen.load_donation_details(donation_id)
+        self.manager.current = 'donation_detail'
+
+        # Update the red dot in the HomeNGOScreen
+        home_screen = self.manager.get_screen('home_ngo')
+        home_screen.check_unread_notifications()
+
+    def get_current_ngo_id(self):
+        """Get the current NGO's ID from the app."""
+        app = App.get_running_app()
+        return app.current_user_id  # Assuming you store the current NGO's ID in the app
 
 class GalleryScreen(Screen):
     def open_file_chooser(self):
@@ -1062,7 +1245,8 @@ class AnnSamrakshnaApp(MDApp):
         self.screen_manager = Builder.load_string(KV)
         self.donations = []
         self.ngos = []
-        self.is_donor = False  
+        self.is_donor = False
+        self.current_user_id = None  # Store the current user's ID
         return self.screen_manager
 
     def change_screen(self, screen_name):
@@ -1081,6 +1265,7 @@ class AnnSamrakshnaApp(MDApp):
 
         if donor_data and bcrypt.checkpw(password.encode('utf-8'), donor_data["password"].encode('utf-8')):
             self.is_donor = True
+            self.current_user_id = username  # Store the current user's ID
             self.change_screen('home_donor')
             toast("Login successful!")
             return
@@ -1090,6 +1275,7 @@ class AnnSamrakshnaApp(MDApp):
 
         if ngo_data and bcrypt.checkpw(password.encode('utf-8'), ngo_data["password"].encode('utf-8')):
             self.is_donor = False
+            self.current_user_id = username  # Store the current user's ID
             self.change_screen('home_ngo')
             toast("Login successful!")
             return
