@@ -58,6 +58,9 @@ MDNavigationLayout:
         ProfileScreen: 
         GalleryScreen: 
         NotificationsScreen:
+        SettingsScreen:
+
+
 
 <RedDot@MDBoxLayout>:
     size_hint: None, None
@@ -371,6 +374,7 @@ MDNavigationLayout:
                 text: "Settings"
                 icon: "wrench"
                 md_bg_color: 235/255, 220/255, 199/255, 1
+                on_release: app.change_screen('settings'); nav_drawer_donor.set_state("close")
             
             MDNavigationDrawerItem:
                 text: "Log-Out"
@@ -589,6 +593,7 @@ MDNavigationLayout:
                 text: "Settings"
                 icon: "wrench"
                 md_bg_color: 235/255, 220/255, 199/255, 1
+                on_release: app.change_screen('settings'); nav_drawer_ngo.set_state("close")
 
             MDNavigationDrawerItem:
                 text: "Notification"
@@ -757,6 +762,132 @@ MDNavigationLayout:
                         id: address
                         text: "Address: "
                         theme_text_color: "Secondary"
+<SettingsScreen>:
+    name: 'settings'
+    BoxLayout:
+        orientation: 'vertical'
+        md_bg_color: 235/255, 220/255, 199/255, 1
+
+        MDTopAppBar:
+            title: "Settings"
+            md_bg_color: 205/255, 133/255, 63/255
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_donor' if app.is_donor else 'home_ngo')]]
+
+        ScrollView:
+            MDBoxLayout:
+                orientation: 'vertical'
+                adaptive_height: True
+                padding: dp(30)
+                spacing: dp(30)
+                size_hint_y: None
+                height: self.minimum_height  # Ensure the layout expands to fit its content
+
+                # Change Password Card
+                MDCard:
+                    orientation: 'vertical'
+                    padding: dp(30)
+                    size_hint: None, None
+                    size: dp(320), dp(280)
+                    pos_hint: {"center_x": 0.5}
+                    md_bg_color: 1, 1, 1, 1
+                    elevation: 4
+                    radius: dp(12)
+
+                    MDLabel:
+                        text: "Change Password"
+                        font_style: "H6"
+                        theme_text_color: "Primary"
+                        bold: True
+                        size_hint_y: None
+                        height: dp(60)
+
+                    MDTextField:
+                        id: current_password
+                        hint_text: "Current Password"
+                        password: True
+                        size_hint_y: None
+                        height: dp(50)
+
+                    MDTextField:
+                        id: new_password
+                        hint_text: "New Password"
+                        password: True
+                        size_hint_y: None
+                        height: dp(50)
+
+                    MDRaisedButton:
+                        text: "Update Password"
+                        size_hint_x: 0.8
+                        pos_hint: {"center_x": 0.5}
+                        md_bg_color: 205/255, 133/255, 63/255
+                        theme_text_color: "Custom"
+                        text_color: 1, 1, 1, 1
+                        size_hint_y: None
+                        height: dp(50)
+                        on_release: root.change_password()
+
+                # Edit Profile Card
+                MDCard:
+                    orientation: 'vertical'
+                    padding: dp(30)
+                    size_hint: None, None
+                    size: dp(320), dp(350)
+                    pos_hint: {"center_x": 0.5}
+                    md_bg_color: 1, 1, 1, 1
+                    elevation: 4
+                    radius: dp(12)
+
+                    MDLabel:
+                        text: "Edit Profile"
+                        font_style: "H6"
+                        theme_text_color: "Primary"
+                        bold: True
+                        size_hint_y: None
+                        height: dp(60)
+
+                    MDTextField:
+                        id: edit_email
+                        hint_text: "Email Address"
+                        input_type: "mail"
+                        size_hint_y: None
+                        height: dp(50)
+
+                    MDTextField:
+                        id: edit_phone
+                        hint_text: "Phone Number"
+                        input_type: "tel"
+                        size_hint_y: None
+                        height: dp(50)
+
+                    MDTextField:
+                        id: edit_address
+                        hint_text: "Address"
+                        size_hint_y: None
+                        height: dp(50)
+
+                    MDRaisedButton:
+                        text: "Update Profile"
+                        size_hint_x: 0.8
+                        pos_hint: {"center_x": 0.5}
+                        md_bg_color: 205/255, 133/255, 63/255
+                        theme_text_color: "Custom"
+                        text_color: 1, 1, 1, 1
+                        size_hint_y: None
+                        height: dp(50)
+                        on_release: root.update_profile()
+
+                # Log Out Button
+                MDRaisedButton:
+                    text: "Log Out"
+                    size_hint_x: 0.8
+                    pos_hint: {"center_x": 0.5}
+                    md_bg_color: 205/255, 133/255, 63/255
+                    theme_text_color: "Custom"
+                    text_color: 1, 1, 1, 1
+                    size_hint_y: None
+                    height: dp(50)
+                    on_release: root.logout()
+                        
 
 <GalleryScreen>:
     name: 'gallery'
@@ -1178,6 +1309,106 @@ class NotificationsScreen(Screen):
         """Get the current NGO's ID from the app."""
         app = App.get_running_app()
         return app.current_user_id  # Assuming you store the current NGO's ID in the app
+
+class SettingsScreen(Screen):
+    def on_enter(self):
+        """Load the current user's profile data when the screen is entered."""
+        self.load_profile_data()
+
+    def load_profile_data(self):
+        """Load the current user's profile data from Firebase."""
+        app = App.get_running_app()
+        username = app.current_user_id
+        if not username:
+            toast("User not logged in")
+            return
+
+        if app.is_donor:
+            ref = db.reference("donors")
+        else:
+            ref = db.reference("ngos")
+
+        user_data = ref.child(username).get()
+
+        if user_data:
+            self.ids.edit_email.text = user_data.get("email", "")
+            self.ids.edit_phone.text = user_data.get("phone", "")
+            self.ids.edit_address.text = user_data.get("address", "")
+        else:
+            toast("User data not found")
+
+    def change_password(self):
+        """Change the user's password."""
+        current_password = self.ids.current_password.text.strip()
+        new_password = self.ids.new_password.text.strip()
+
+        if not current_password or not new_password:
+            toast("Please fill all fields")
+            return
+
+        app = App.get_running_app()
+        username = app.current_user_id
+        if not username:
+            toast("User not logged in")
+            return
+
+        if app.is_donor:
+            ref = db.reference("donors")
+        else:
+            ref = db.reference("ngos")
+
+        user_data = ref.child(username).get()
+
+        if user_data and bcrypt.checkpw(current_password.encode('utf-8'), user_data["password"].encode('utf-8')):
+            # Hash the new password
+            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+            # Update the password in Firebase
+            ref.child(username).update({"password": hashed_password})
+            toast("Password updated successfully!")
+            self.ids.current_password.text = ""
+            self.ids.new_password.text = ""
+        else:
+            toast("Incorrect current password")
+
+    def update_profile(self):
+        """Update the user's profile information."""
+        email = self.ids.edit_email.text.strip()
+        phone = self.ids.edit_phone.text.strip()
+        address = self.ids.edit_address.text.strip()
+
+        if not email or not phone or not address:
+            toast("Please fill all fields")
+            return
+
+        app = App.get_running_app()
+        username = app.current_user_id
+        if not username:
+            toast("User not logged in")
+            return
+
+        if app.is_donor:
+            ref = db.reference("donors")
+        else:
+            ref = db.reference("ngos")
+
+        # Update the profile data in Firebase
+        ref.child(username).update({
+            "email": email,
+            "phone": phone,
+            "address": address
+        })
+        toast("Profile updated successfully!")
+
+    def logout(self):
+        """Log out the user."""
+        app = App.get_running_app()
+        app.current_user_id = None
+        app.is_donor = False
+        toast("Logged out successfully!")
+        self.manager.current = 'login'
+
+
 
 class GalleryScreen(Screen):
     def open_file_chooser(self):
