@@ -93,7 +93,7 @@ MDNavigationLayout:
             spacing: "10dp"
             md_bg_color: 235/255, 220/255, 199/255, 1
             Image:
-                source: 'C:/Users/Nikhil Samanta/OneDrive/Desktop/Annasamrakshna/Annasamrakshna/assets/logo/Annsamrakshna.png'
+                source: 'D:/Annsamrakshna/assets/logo/Annsamrakshna.png'
                 size_hint: (0.8, 0.7)
                 pos_hint: {"center_x": 0.5}
                 keep_ratio: True
@@ -301,7 +301,7 @@ MDNavigationLayout:
             padding: "20dp"
             md_bg_color: 235/255, 220/255, 199/255, 1
             Image:
-                source: 'C:/Users/Nikhil Samanta/OneDrive/Desktop/Annasamrakshna/Annasamrakshna/assets/logo/Annsamrakshna.png'
+                source: 'D:/Annsamrakshna/assets/logo/Annsamrakshna.png'
                 size_hint: (0.5, 0.5)
                 pos_hint: {"center_x": 0.5}
                 keep_ratio: True
@@ -522,7 +522,7 @@ MDNavigationLayout:
             padding: "20dp"
             md_bg_color: 235/255, 220/255, 199/255, 1
             Image:
-                source: 'C:/Users/Nikhil Samanta/OneDrive/Desktop/Annasamrakshna/Annasamrakshna/assets/logo/Annsamrakshna.png'
+                source: 'D:/Annsamrakshna/assets/logo/Annsamrakshna.png'
                 size_hint: (0.5, 0.5)
                 pos_hint: {"center_x": 0.5}
                 keep_ratio: True
@@ -530,19 +530,19 @@ MDNavigationLayout:
             MDBoxLayout:
                 orientation: 'vertical'
                 padding: [20,80]
-                spacing: dp(50)
+                spacing: dp(30)
                 
                 MDRaisedButton:
                     text: "View Donations"
                     pos_hint: {"center_x": 0.5}
-                    size_hint: (0.8, 0) 
+                    size_hint: (0.8, 0)
                     md_bg_color: 205/255, 133/255, 63/255,
                     on_release: app.change_screen('view_donations_ngo');nav_drawer_ngo.set_state("close")
 
                 MDRaisedButton:
                     text: "View Notifications"
                     pos_hint: {"center_x": 0.5}
-                    size_hint: (0.8, 0) 
+                    size_hint: (0.8, 0)
                     md_bg_color: 205/255, 133/255, 63/255,
                     on_release: app.change_screen('notifications'); nav_drawer_ngo.set_state("close")
 
@@ -583,11 +583,11 @@ MDNavigationLayout:
                 md_bg_color: 235/255, 220/255, 199/255, 1
                 on_release: app.change_screen('view_ngos_ngo'); nav_drawer_ngo.set_state("close")
 
-            MDNavigationDrawerItem:
-                text: "Gallery"
-                icon: "image"
-                md_bg_color: 235/255, 220/255, 199/255, 1
-                on_release: app.change_screen('gallery'); nav_drawer_ngo.set_state("close")
+            # MDNavigationDrawerItem:
+            #     text: "Gallery"
+            #     icon: "image"
+            #     md_bg_color: 235/255, 220/255, 199/255, 1
+            #     on_release: app.change_screen('gallery'); nav_drawer_ngo.set_state("close")
             
             MDNavigationDrawerItem:
                 text: "Settings"
@@ -724,6 +724,7 @@ MDNavigationLayout:
             MDBoxLayout:
                 orientation: 'vertical'
                 adaptive_height: True
+                
                 padding: dp(20)
                 spacing: dp(20)
 
@@ -777,6 +778,7 @@ MDNavigationLayout:
             MDBoxLayout:
                 orientation: 'vertical'
                 adaptive_height: True
+                md_bg_color: 235/255, 220/255, 199/255, 1
                 padding: dp(30)
                 spacing: dp(30)
                 size_hint_y: None
@@ -897,7 +899,7 @@ MDNavigationLayout:
         MDTopAppBar:
             title: "Gallery"
             md_bg_color: 205/255, 133/255, 63/255,
-            left_action_items: [["arrow-left", lambda x: app.change_screen('home_ngo')]]
+            left_action_items: [["arrow-left", lambda x: app.change_screen('home_donor')]]
         
         MDBoxLayout:
             orientation: 'vertical'
